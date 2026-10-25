@@ -1,0 +1,764 @@
+/* ==========================================================================
+   comments.css — 文章底部评论区（Twikoo）
+   容器与配置见 layout/_partial/comments.ejs，加载逻辑见 js/comments.js。
+
+   Twikoo 自带的样式里，颜色是硬编码的 Element UI 色板（强调色 #409eff 蓝、
+   圆角 4~5px），跟本主题的「主色 + 零圆角」不符。它没有暴露 CSS 变量，
+   所以这里按它的类名逐条换色 —— 全部限定在 .post-comments 下，不外溢。
+
+   明暗不用管：Twikoo 内部大量使用 currentColor 和半透明色，
+   容器继承了 --c-text 它就自动适配。唯一例外是 OwO 表情面板，
+   它硬编码了白底，见文件末尾的补丁。
+
+   说说页（.memos-page）复用同一套 DOM，但整体设计在 memos.css 里
+   用 .memos-page 前缀重写了一遍；它加载更晚，同特异性打平时会赢，
+   所以下面的规则在说说页上会被 memos.css 覆盖，不会冲突。
+   ========================================================================== */
+
+/* 与 post-footer 之间用一条描边分隔，层次表达和站内其它区块一致 */
+.post-comments {
+	margin-top: 40px;
+	padding-top: 24px;
+	border-top: 1px solid var(--c-border);
+}
+
+/* 脚本注入前先占住高度，免得加载完成时页面往下跳一跳 */
+.post-comments .twikoo:empty {
+	min-height: 140px;
+}
+
+/* 让 Twikoo 的 currentColor 拿到主题文字色 */
+.post-comments .twikoo {
+	color: var(--c-text);
+}
+
+/* ---------- 标题 ----------
+   Twikoo 自己渲染「评论」标题（带评论数、排序、折叠），
+   不再另起一个 h2；这里把它的外观改成站内 .section-title 的样子。 */
+.post-comments .tk-comments-title {
+	margin-bottom: 16px;
+	padding-left: 10px;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.2;
+	border-left: 3px solid var(--c-primary);
+}
+
+/* ---------- 强调色：Element UI 蓝 → 站点主色 ---------- */
+
+/* 注意是 .tk-action（单数）：Twikoo 的动作区类名如此，早先写成 .tk-actions
+   一直没匹配上，靠 .tk-action-link 兜住了按钮本身的颜色。
+   选择器必须压过 Twikoo 自带的 .twikoo .tk-* 规则（它注入得更晚、特异性打平时会赢）。 */
+.post-comments .tk-comments .tk-action-link,
+.post-comments .tk-comments .tk-action-icon,
+.post-comments .tk-comments .tk-button--text,
+.post-comments .tk-comments .tk-action button,
+.post-comments .tk-comments .tk-icon.__comments {
+	color: var(--c-primary);
+}
+
+.post-comments .tk-comments .tk-input__inner:focus {
+	border-color: var(--c-primary);
+}
+
+.post-comments .tk-comments .tk-nick-link:hover {
+	color: var(--c-primary);
+}
+
+.post-comments .tk-comments .tk-input-group__append .tk-button:hover {
+	color: var(--c-primary);
+}
+
+/* 排序：未选中是半透明的（原 #409eff99），选中才满色 */
+.post-comments .tk-comments .tk-sort-item {
+	color: var(--c-muted);
+}
+
+.post-comments .tk-comments .tk-sort-item.__active,
+.post-comments .tk-comments .tk-sort-item:focus {
+	color: var(--c-primary);
+}
+
+/* 普通按钮的悬停态 */
+.post-comments .tk-comments .tk-button:not(.tk-button--primary):not(.tk-button--text):not(.is-disabled):hover,
+.post-comments .tk-comments .tk-button:not(.tk-button--primary):not(.tk-button--text):not(.is-disabled):focus,
+.post-comments .tk-comments .tk-button:not(.tk-button--primary):not(.tk-button--text):not(.is-disabled):active {
+	color: var(--text);
+	background-color: var(--tile-tint-hover);
+	border-color: var(--text-mute);
+}
+
+/* 主按钮（发表） */
+.post-comments .tk-comments .tk-button--primary {
+	color: #fff;
+	background: var(--c-primary);
+	border-color: var(--c-primary);
+}
+
+.post-comments .tk-comments .tk-button--primary:not(.is-disabled):hover,
+.post-comments .tk-comments .tk-button--primary:not(.is-disabled):focus,
+.post-comments .tk-comments .tk-button--primary:not(.is-disabled):active {
+	color: #fff;
+	background: var(--c-primary-dark);
+	border-color: var(--c-primary-dark);
+}
+
+.post-comments .tk-comments .tk-button--primary.is-disabled,
+.post-comments .tk-comments .tk-button--primary.is-disabled:active,
+.post-comments .tk-comments .tk-button--primary.is-disabled:focus,
+.post-comments .tk-comments .tk-button--primary.is-disabled:hover {
+	background-color: var(--c-primary-soft);
+	border-color: transparent;
+}
+
+/* 表情按钮的选中态：底色 + 一圈光晕 */
+.post-comments .tk-comments .tk-icon.__comments.__active {
+	color: #fff;
+	background: var(--c-primary);
+	box-shadow: 0 0 0 .2rem var(--c-primary);
+}
+
+/* 分页当前页 */
+.post-comments .tk-comments .tk-pagination-pager.__current {
+	background-color: var(--c-primary);
+}
+
+/* 加载动画 */
+.post-comments .tk-comments .tk-loading-spinner .path {
+	stroke: var(--c-primary);
+}
+
+/* 标签：蓝是 Twikoo 默认的强调色，绿是「博主」那一枚。
+   绿标签会落在说说卡片的浅主色底上，所以做成实心主色，免得和底色糊在一起。 */
+.post-comments .tk-comments .tk-tag-blue {
+	color: var(--c-primary);
+	background-color: var(--c-primary-soft);
+	border-color: var(--c-primary);
+}
+
+.post-comments .tk-comments .tk-tag-green {
+	color: #fff;
+	background-color: var(--c-primary);
+	border-color: var(--c-primary);
+}
+
+/* ---------- 扁平约束：站点零圆角 ----------
+   Twikoo 的圆角散落在输入框、按钮、头像、代码块工具条、表情面板等处，
+   逐个列容易漏，这里一次抹平。 */
+.post-comments * {
+	border-radius: 0 !important;
+}
+
+/* ---------- 代码块 ----------
+   评论里贴的代码沿用站内代码块的底色，和文章里的观感连上 */
+.post-comments .tk-content pre,
+.post-comments .tk-preview-container pre {
+	background: var(--c-code-bg);
+	border: 1px solid var(--c-border);
+}
+
+/* ---------- 正文内的链接与图片 ----------
+   Twikoo 没给评论正文的链接上色（会落回浏览器默认蓝），这里统一到站内样式 */
+.post-comments .tk-content a {
+	color: var(--accent-text);
+	border-bottom: 1px solid var(--stroke-strong);
+}
+
+.post-comments .tk-content a:hover {
+	color: var(--accent);
+	border-bottom-color: var(--accent);
+}
+
+.post-comments .tk-content img {
+	border: 1px solid var(--stroke);
+}
+
+/* ---------- OwO 表情面板的暗色补丁 ----------
+   面板硬编码了白底，且只认 [data-theme=dark]。
+   手动切到暗色时 Twikoo 自己就处理了；跟随系统的档位下 html 上没有这个属性，
+   所以要按媒体查询补一份。选择器与 main.css 的暗色令牌保持一致。 */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]) .post-comments .OwO .OwO-body {
+		color: var(--c-text);
+		background-color: var(--tile-tint);
+		border-color: var(--c-border-strong);
+	}
+
+	:root:not([data-theme="light"]) .post-comments .OwO .OwO-bar {
+		border-top-color: var(--c-border);
+	}
+}
+
+/* ---------- 表情面板的窄屏宽度 ----------
+   Twikoo 自带样式里有四条 #twikoo 前缀的规则控制每行放几个表情，
+   它们要求容器 id 就是 twikoo；而容器一旦叫 twikoo，浏览器就会给
+   window.twikoo 建一个指向该元素的同名全局，和 Twikoo 的全局对象撞名
+   （报错 window.twikoo.init is not a function）。所以容器改用了 tcomment，
+   这四条按 .post-comments 重写一遍。 */
+@media screen and (max-width: 600px) {
+	.post-comments .OwO-items > .OwO-item {
+		width: 16%;
+	}
+}
+
+@media screen and (max-width: 460px) {
+	.post-comments .OwO-items > .OwO-item {
+		width: 20%;
+	}
+}
+
+@media screen and (max-width: 400px) {
+	.post-comments .OwO-items > .OwO-item {
+		width: 25%;
+	}
+}
+
+@media screen and (max-width: 330px) {
+	.post-comments .OwO-items > .OwO-item {
+		width: 33%;
+	}
+}
+
+/* 脚本拉不到时的兜底提示（由 comments.js 写入），沿用站内的虚线占位风格 */
+.comments-fallback {
+	margin: 0;
+	padding: 18px;
+	font-size: 13px;
+	color: var(--c-muted);
+	background: var(--tile-tint);
+	border: 1px dashed var(--c-border-strong);
+}
+
+@media screen and (max-width: 600px) {
+	.post-comments {
+		margin-top: 32px;
+		padding-top: 20px;
+	}
+}
+
+/* ==========================================================================
+   restart-fluent：文章评论区 Fluent 化
+   与说说页同构的设计语言 —— 工具行 + 亚克力磁贴流。
+   所有规则限定在 .post-comments 下；说说页（.memos-page）由 memos.css
+   覆盖，不受这里影响。选择器一律 ≥ (0,3,0)，压过 Twikoo 后注入的
+   .twikoo .tk-*（0,2,0）。
+   ========================================================================== */
+
+/* ---------- 容器：列表改为磁贴流 ---------- */
+.post-comments .tk-comments .tk-comments-container {
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+/* ---------- 工具行：排序分段控件 + 搜索/刷新图标磁贴 ---------- */
+.post-comments .tk-comments .tk-comments-title {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-bottom: 14px;
+	padding-left: 10px;
+}
+
+.post-comments .tk-comments .tk-comments-count {
+	margin-right: auto;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--text);
+}
+
+.post-comments .tk-comments .tk-comments-actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	white-space: nowrap;
+}
+
+/* 排序：分段控件（同站内 .view-seg：选中段满色主色） */
+.post-comments .tk-comments .tk-comments-sort {
+	display: inline-flex;
+	border: 1px solid var(--stroke);
+	background: var(--tile-tint);
+	-webkit-backdrop-filter: blur(14px) saturate(140%);
+	backdrop-filter: blur(14px) saturate(140%);
+}
+
+.post-comments .tk-comments .tk-sort-item {
+	display: inline-flex;
+	align-items: center;
+	height: 28px;
+	padding: 0 13px;
+	font-size: 12px;
+	color: var(--text-mute);
+	background: transparent;
+	border: 0;
+	border-right: 1px solid var(--stroke);
+	transition: background .12s var(--ease), color .12s var(--ease);
+}
+
+.post-comments .tk-comments .tk-sort-item:last-child {
+	border-right: 0;
+}
+
+.post-comments .tk-comments .tk-sort-item:hover {
+	color: var(--text);
+	background: var(--tile-tint-hover);
+}
+
+.post-comments .tk-comments .tk-sort-item.__active,
+.post-comments .tk-comments .tk-sort-item:focus {
+	color: #fff;
+	background: var(--accent);
+	border-color: transparent;
+}
+
+/* 搜索 / 刷新：图标磁贴（JS pressTargets 另给按压与光效） */
+.post-comments .tk-comments-title .tk-icon.__comments {
+	display: grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	box-sizing: border-box;
+	color: var(--text-dim);
+	background: var(--tile-tint);
+	border: 1px solid var(--stroke-strong);
+	-webkit-backdrop-filter: blur(14px) saturate(140%);
+	backdrop-filter: blur(14px) saturate(140%);
+	transition: background .12s var(--ease), color .12s var(--ease);
+}
+
+.post-comments .tk-comments-title .tk-icon.__comments svg {
+	width: 14px;
+	height: 14px;
+}
+
+.post-comments .tk-comments-title .tk-icon.__comments:hover {
+	color: var(--text);
+	background: var(--tile-tint-hover);
+}
+
+.post-comments .tk-comments-title .tk-icon.__comments.__active {
+	color: #fff;
+	background: var(--accent);
+	border-color: transparent;
+	box-shadow: none;
+}
+
+/* 搜索行（点放大镜后展开） */
+.post-comments .tk-comments .tk-comments-search {
+	margin-bottom: 14px;
+}
+
+/* ---------- 输入控件：主题化（字段底 + 聚焦主色描边） ---------- */
+.post-comments .tk-comments .tk-input__inner,
+.post-comments .tk-comments .tk-textarea__inner {
+	background: var(--field);
+	border: 1px solid var(--stroke);
+	color: var(--text);
+	font-size: 13px;
+}
+
+.post-comments .tk-comments .tk-input__inner:focus,
+.post-comments .tk-comments .tk-textarea__inner:focus {
+	background: var(--field-focus);
+	border-color: var(--accent);
+}
+
+.post-comments .tk-comments .tk-input-group {
+	border-radius: 0;
+}
+
+/* 字段组前缀标签（昵称/邮箱/网址）：小芯片 */
+.post-comments .tk-comments .tk-input-group__prepend {
+	color: var(--text-mute);
+	background-color: var(--surface);
+	border-color: var(--stroke-strong);
+	font-size: 12px;
+}
+
+.post-comments .tk-comments .tk-meta-input {
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+/* ---------- 顶部发布框：亚克力面板 ----------
+   访客可见（含昵称/邮箱/网址字段组）；博主简化为纯输入区。
+   面板自带入场动画 + 亚克力，与下方磁贴流同语言。 */
+.post-comments .tk-comments > .tk-submit {
+	margin-bottom: 14px;
+	padding: 16px 18px 14px;
+	background: var(--tile-tint);
+	border: 1px solid var(--stroke);
+	-webkit-backdrop-filter: blur(14px) saturate(140%);
+	backdrop-filter: blur(14px) saturate(140%);
+	animation: fluent-enter .4s var(--ease-out) both;
+	transition: border-color .12s var(--ease);
+}
+
+.post-comments .tk-comments > .tk-submit:hover {
+	border-color: var(--stroke-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.post-comments .tk-comments > .tk-submit {
+		animation: none;
+	}
+}
+
+.post-comments .tk-comments > .tk-submit .tk-avatar {
+	width: 40px;
+	height: 40px;
+}
+
+.post-comments .tk-comments > .tk-submit .tk-avatar-img {
+	border: 1px solid var(--stroke);
+}
+
+/* 发布框里的输入区留白，与磁贴内文对齐 */
+.post-comments .tk-comments > .tk-submit .tk-main {
+	margin-left: 0;
+}
+
+.post-comments .tk-comments > .tk-submit .tk-textarea {
+	margin-top: 10px;
+}
+
+/* OwO / Markdown 图标钮：方形图标磁贴 */
+.post-comments .tk-comments .tk-submit-action-icon {
+	width: 30px;
+	height: 30px;
+	padding: 6px;
+	box-sizing: border-box;
+	color: var(--text-dim);
+	background: var(--tile-tint);
+	border: 1px solid var(--stroke-strong);
+	transition: background .12s var(--ease), color .12s var(--ease);
+}
+
+.post-comments .tk-comments .tk-submit-action-icon:hover {
+	color: var(--text);
+	background: var(--tile-tint-hover);
+}
+
+.post-comments .tk-comments .tk-submit-action-icon svg:hover {
+	opacity: 1;
+}
+
+/* 预览容器 */
+.post-comments .tk-comments .tk-preview-container {
+	margin-left: 0;
+	margin-bottom: 8px;
+	background: var(--code-bg);
+	border: 1px solid var(--stroke);
+}
+
+/* ---------- 按钮：主题磁贴按钮 ---------- */
+.post-comments .tk-comments .tk-button:not(.tk-button--text) {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 32px;
+	padding: 0 14px;
+	font-family: "Segoe UI", "Microsoft YaHei UI", "PingFang SC", system-ui, sans-serif;
+	font-size: 12.5px;
+	line-height: 1;
+	color: var(--text);
+	background: var(--tile-tint);
+	border: 1px solid var(--stroke-strong);
+	cursor: pointer;
+	transition: background .12s var(--ease), color .12s var(--ease), border-color .12s var(--ease), filter .12s var(--ease);
+}
+
+.post-comments .tk-comments .tk-button:not(.tk-button--text):hover,
+.post-comments .tk-comments .tk-button:not(.tk-button--text):focus {
+	color: var(--text);
+	background: var(--tile-tint-hover);
+	border-color: var(--text-mute);
+}
+
+.post-comments .tk-comments .tk-button--primary {
+	color: #fff;
+	background: var(--accent);
+	border-color: var(--accent);
+}
+
+.post-comments .tk-comments .tk-button--primary:not(.is-disabled):hover,
+.post-comments .tk-comments .tk-button--primary:not(.is-disabled):focus {
+	color: #fff;
+	background: var(--accent);
+	border-color: var(--accent);
+	filter: brightness(1.1);
+}
+
+.post-comments .tk-comments .tk-button--primary.is-disabled {
+	color: var(--text-mute);
+	background: var(--tile-tint);
+	border-color: var(--stroke);
+	filter: none;
+}
+
+/* 评论折叠后的展开按钮 */
+.post-comments .tk-comments .tk-expand {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 30px;
+	padding: 0 12px;
+	font-family: "Segoe UI", "Microsoft YaHei UI", "PingFang SC", system-ui, sans-serif;
+	font-size: 12.5px;
+	line-height: 1;
+	color: var(--text);
+	background: var(--tile-tint);
+	border: 1px solid var(--stroke-strong);
+	cursor: pointer;
+	transition: background .12s var(--ease), color .12s var(--ease), border-color .12s var(--ease);
+}
+
+.post-comments .tk-comments .tk-expand:hover,
+.post-comments .tk-comments .tk-expand:focus {
+	color: var(--text);
+	background: var(--tile-tint-hover);
+	border-color: var(--text-mute);
+}
+
+/* ---------- 一条评论 = 一块亚克力磁贴 ----------
+   卡片绑定由 fluent.js 的 cardTargets 负责（Reveal 径向高光 + 边缘光），
+   自身带入场动画；动画/模糊都挂在自身 = 不踩背景根。 */
+.post-comments .tk-comments-container > .tk-comment {
+	margin: 0;
+	padding: 16px 18px 14px;
+	background: var(--tile-tint);
+	border: 1px solid var(--stroke);
+	-webkit-backdrop-filter: blur(14px) saturate(140%);
+	backdrop-filter: blur(14px) saturate(140%);
+	animation: fluent-enter .4s var(--ease-out) both;
+	transition: border-color .12s var(--ease);
+}
+
+.post-comments .tk-comments-container > .tk-comment:hover {
+	border-color: var(--stroke-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.post-comments .tk-comments-container > .tk-comment {
+		animation: none;
+	}
+}
+
+/* 头像只取顶层评论的直接子级 >：后代选择器会泄漏进 .tk-replies 的二级头像，
+   把它们的容器撑成 40px，而 Twikoo 又把 img 钉在 1.6rem，导致图与容器错位。 */
+.post-comments .tk-comments-container > .tk-comment > .tk-avatar {
+	width: 40px;
+	height: 40px;
+}
+
+.post-comments .tk-comments-container > .tk-comment > .tk-avatar .tk-avatar-img,
+.post-comments .tk-comments-container > .tk-comment > .tk-avatar img.tk-avatar-img {
+	border: 1px solid var(--stroke);
+}
+
+.post-comments .tk-comments-container > .tk-comment .tk-meta {
+	gap: 8px;
+}
+
+.post-comments .tk-comments-container > .tk-comment .tk-nick,
+.post-comments .tk-comments-container > .tk-comment .tk-nick-link {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--text);
+}
+
+.post-comments .tk-comments-container > .tk-comment .tk-nick-link:hover {
+	color: var(--accent-text);
+}
+
+.post-comments .tk-comments-container > .tk-comment .tk-time {
+	font-size: 12px;
+	color: var(--text-mute);
+	font-variant-numeric: tabular-nums;
+}
+
+/* 评论正文：站内正文同级的排版 */
+.post-comments .tk-comments-container > .tk-comment .tk-content {
+	margin-top: 8px;
+	font-size: 14px;
+	line-height: 1.75;
+	color: var(--text-dim);
+}
+
+/* 动作（赞 / 踩 / 回复）：悬停浮起一块浅磁贴，图标随按钮文字色走；
+   JS pressTargets 已收录 .tk-action-link，按下另有按压光效 */
+.post-comments .tk-comments-container > .tk-comment .tk-action-link {
+	padding: 4px 8px;
+	color: var(--text-mute);
+	background: transparent;
+	border: 1px solid transparent;
+	transition: background .12s var(--ease), color .12s var(--ease), border-color .12s var(--ease);
+}
+
+.post-comments .tk-comments-container > .tk-comment .tk-action-icon {
+	color: inherit;
+}
+
+.post-comments .tk-comments-container > .tk-comment .tk-action-link:hover,
+.post-comments .tk-comments-container > .tk-comment .tk-action-link:focus {
+	color: var(--accent-text);
+	background: var(--tile-tint-hover);
+	border-color: var(--stroke);
+}
+
+.post-comments .tk-comments-container > .tk-comment .tk-action-count {
+	font-size: 12px;
+	color: var(--text-mute);
+}
+
+/* 位置 / 系统 / 浏览器脚注 → 小芯片 */
+.post-comments .tk-comments-container > .tk-comment .tk-extras {
+	margin-top: 12px;
+	gap: 6px;
+	color: var(--text-mute);
+	font-size: 12px;
+}
+
+.post-comments .tk-comments-container > .tk-comment .tk-extra {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 2px 8px;
+	background: var(--surface);
+	border: 1px solid var(--stroke);
+}
+
+.post-comments .tk-comments-container > .tk-comment .tk-extra .tk-icon {
+	width: 11px;
+	height: 11px;
+	opacity: .75;
+}
+
+/* ---------- 二级回复：比评论再轻一档的 surface 小块 ---------- */
+.post-comments .tk-comments-container > .tk-comment .tk-replies {
+	margin-top: 12px;
+}
+
+.post-comments .tk-replies .tk-comment {
+	margin-top: 8px;
+	padding: 10px 12px;
+	background: var(--surface);
+	border: 1px solid var(--stroke);
+}
+
+.post-comments .tk-replies .tk-comment:first-child {
+	margin-top: 0;
+}
+
+/* 二级回复头像：容器与 img 一起覆盖 ——
+   Twikoo 自带 .twikoo .tk-replies .tk-avatar .tk-avatar-img { height:1.6rem }（0,4,0）
+   会把 img 高度钉死，容器若被撑大就会图容器错位；这里加一级 .tk-comments
+   把容器和 img 都收回到主题尺寸。 */
+.post-comments .tk-comments .tk-replies .tk-avatar {
+	width: 26px;
+	height: 26px;
+}
+
+.post-comments .tk-comments .tk-replies .tk-avatar .tk-avatar-img,
+.post-comments .tk-comments .tk-replies .tk-avatar img.tk-avatar-img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.post-comments .tk-replies .tk-nick,
+.post-comments .tk-replies .tk-nick-link {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text);
+}
+
+.post-comments .tk-replies .tk-content {
+	margin-top: 6px;
+	font-size: 13.5px;
+	line-height: 1.75;
+	color: var(--text-dim);
+}
+
+.post-comments .tk-replies .tk-extras {
+	margin-top: 8px;
+	font-size: 11.5px;
+}
+
+/* 楼中楼回复框：嵌在磁贴里的浅面板 */
+.post-comments .tk-comment .tk-submit {
+	margin-top: 12px;
+	padding: 12px;
+	background: var(--surface);
+	border: 1px solid var(--stroke);
+}
+
+/* ---------- 空态 / 分页 / 页脚 ---------- */
+.post-comments .tk-comments-no {
+	padding: 44px 20px;
+	font-size: 13px;
+	color: var(--text-mute);
+	background: var(--tile-tint);
+	border: 1px dashed var(--stroke-strong);
+}
+
+.post-comments .tk-comments .tk-pagination-pager {
+	width: 30px;
+	height: 30px;
+	margin: 2px;
+	color: var(--text-dim);
+	background: var(--tile-tint);
+	border: 1px solid var(--stroke);
+	transition: background .12s var(--ease), color .12s var(--ease);
+}
+
+.post-comments .tk-comments .tk-pagination-pager:hover {
+	color: var(--text);
+	background: var(--tile-tint-hover);
+}
+
+.post-comments .tk-comments .tk-pagination-pager.__current {
+	color: #fff;
+	background: var(--accent);
+	border-color: transparent;
+}
+
+.post-comments .tk-comments .tk-footer {
+	margin-top: 14px;
+	font-size: 11px;
+	color: var(--text-mute);
+}
+
+/* OwO 表情面板：Twikoo 硬编码白底，这里换成主题令牌（明暗皆适配） */
+.post-comments .OwO .OwO-body {
+	color: var(--text);
+	background-color: var(--tile-tint);
+	border: 1px solid var(--stroke-strong);
+}
+
+.post-comments .OwO .OwO-bar {
+	border-top-color: var(--stroke);
+}
+
+.post-comments .OwO .OwO-item:hover {
+	background: var(--tile-tint-hover);
+}
+
+/* ---------- 窄屏 ---------- */
+@media screen and (max-width: 600px) {
+	.post-comments .tk-comments-container > .tk-comment {
+		padding: 14px 14px 12px;
+	}
+
+	.post-comments .tk-comments > .tk-submit {
+		padding: 14px 14px 12px;
+	}
+
+	.post-comments .tk-comments .tk-comments-actions {
+		flex-wrap: wrap;
+	}
+}

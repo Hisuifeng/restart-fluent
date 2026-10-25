@@ -1,0 +1,34 @@
+<%#
+	首页右栏的月历（文章日期分布 + 法定节假日）。
+	骨架由服务端渲染，年月标题、日期格子、柱状分布交给 js/calendar.js 填。
+	数据在 _partial/calendar-data.ejs 里输出为 JSON，两者靠 #cal-data 关联。
+%>
+<section class="side-card cal-card" id="cal">
+	<h2 class="side-card-title">日历</h2>
+
+	<div class="cal-body">
+		<div class="cal-nav">
+			<button type="button" class="cal-step" id="cal-prev" aria-label="上个月">&lt;</button>
+			<button type="button" class="cal-title" id="cal-title" title="回到本月">—</button>
+			<button type="button" class="cal-step" id="cal-next" aria-label="下个月">&gt;</button>
+		</div>
+
+		<div class="cal-week" id="cal-week" aria-hidden="true"></div>
+		<div class="cal-grid" id="cal-grid" role="grid" aria-label="文章日历"></div>
+
+		<div class="cal-hist">
+			<div class="cal-bars" id="cal-bars"></div>
+			<div class="cal-months" id="cal-months" aria-hidden="true"></div>
+		</div>
+
+		<p class="cal-foot">
+			<span id="cal-count">本月 0 篇</span>
+			<span class="cal-legend">
+				<i class="cal-mk post" aria-hidden="true"></i>文章
+				<i class="cal-mk holiday" aria-hidden="true"></i>假期
+			</span>
+		</p>
+
+		<ul class="cal-posts" id="cal-posts" hidden></ul>
+	</div>
+</section>

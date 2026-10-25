@@ -1,0 +1,120 @@
+/* ==========================================================================
+   animations.css — 页面进入动画
+   只做轻微上浮与淡入，不改变卡片光效/按压语义。
+   ========================================================================== */
+
+@keyframes fluent-enter {
+	from {
+		opacity: 0;
+		translate: 0 10px;
+	}
+	to {
+		opacity: 1;
+		translate: 0 0;
+	}
+}
+
+.home-hero {
+	animation: fluent-enter .48s var(--ease-out) both;
+}
+
+.post-card,
+.side-card,
+.term-card,
+.friend-card,
+.about-profile,
+.page-card,
+.notfound,
+.search-panel,
+.music-card,
+.countdown,
+.archive-stats,
+.archive-item,
+.toc-box,
+.share-poster {
+	animation: fluent-enter .4s var(--ease-out) both;
+}
+
+.post-list > .post-card:nth-child(2) { animation-delay: .035s; }
+.post-list > .post-card:nth-child(3) { animation-delay: .07s; }
+.post-list > .post-card:nth-child(4) { animation-delay: .105s; }
+.post-list > .post-card:nth-child(5) { animation-delay: .14s; }
+.post-list > .post-card:nth-child(6) { animation-delay: .175s; }
+
+.archive-row:nth-child(2) .archive-item { animation-delay: .035s; }
+.archive-row:nth-child(3) .archive-item { animation-delay: .07s; }
+.archive-row:nth-child(4) .archive-item { animation-delay: .105s; }
+.archive-row:nth-child(5) .archive-item { animation-delay: .14s; }
+.archive-row:nth-child(6) .archive-item { animation-delay: .175s; }
+
+/* 标签页：标签逐个上浮，按出现顺序轻微错开 */
+.tag-cloud .tag {
+	animation: fluent-enter .34s var(--ease-out) both;
+}
+
+.tag-cloud .tag:nth-child(2) { animation-delay: .025s; }
+.tag-cloud .tag:nth-child(3) { animation-delay: .05s; }
+.tag-cloud .tag:nth-child(4) { animation-delay: .075s; }
+.tag-cloud .tag:nth-child(5) { animation-delay: .1s; }
+.tag-cloud .tag:nth-child(6) { animation-delay: .125s; }
+.tag-cloud .tag:nth-child(7) { animation-delay: .15s; }
+.tag-cloud .tag:nth-child(8) { animation-delay: .175s; }
+.tag-cloud .tag:nth-child(9) { animation-delay: .2s; }
+.tag-cloud .tag:nth-child(10) { animation-delay: .225s; }
+.tag-cloud .tag:nth-child(n + 11) { animation-delay: .25s; }
+
+/* ---------- pjax 换页：幻灯片推入 ----------
+   前进/点链接：新页面从右往左推入；点「返回上一页」或浏览器后退：从左往右。
+   只动 #content，卡片自身的入场动画不受影响。 */
+@keyframes page-slide-in-right {
+	from {
+		opacity: 0;
+		transform: translateX(48px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes page-slide-in-left {
+	from {
+		opacity: 0;
+		transform: translateX(-48px);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+#content.slide-in-right {
+	animation: page-slide-in-right .32s var(--ease-out) both;
+}
+
+#content.slide-in-left {
+	animation: page-slide-in-left .32s var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.home-hero,
+	.post-card,
+	.tag-cloud .tag,
+	#content.slide-in-right,
+	#content.slide-in-left,
+	.side-card,
+	.term-card,
+	.friend-card,
+	.about-profile,
+	.page-card,
+	.notfound,
+	.search-panel,
+	.music-card,
+	.countdown,
+	.archive-stats,
+	.archive-item,
+	.toc-box,
+	.share-poster {
+		animation: none;
+	}
+}

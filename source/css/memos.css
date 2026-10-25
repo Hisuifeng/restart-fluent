@@ -1,0 +1,697 @@
+/* ==========================================================================
+   memos.css — 说说
+   逻辑见 js/memos.js，页面见 layout/shuoshuo.ejs。
+   配色全部走 fluent.css 的设计令牌，1px 描边、零圆角。
+   ========================================================================== */
+
+/* ---------- 说说页：发布框只对博主显示 ----------
+
+   Twikoo 顶层的发布框是 .tk-comments 的直接子节点；评论里那条「回复」用的
+   也是 .tk-submit，但它在 .tk-comment 里面。所以这里必须用 > 限定，
+   一锅端就会把访客的回复框一起藏掉。 */
+.memos-page .tk-comments > .tk-submit {
+	display: none;
+}
+
+.memos-page.is-owner .tk-comments > .tk-submit {
+	display: block;
+	padding-bottom: 16px;
+	margin-bottom: 4px;
+	border-bottom: 1px solid var(--stroke);
+}
+
+/* 发布框那句提醒只给博主看：.is-owner 由 js/memos.js 的 initOwnerGate 加上。
+   做成 Win10 信息条（浅主色底 + 主色左棱）。访客这边不解释为什么没有发布框。 */
+.memos-page .memos-tip {
+	display: none;
+	margin: 0 0 14px;
+	padding: 10px 14px;
+	font-size: 12.5px;
+	line-height: 1.75;
+	color: var(--text-dim);
+	background: var(--accent-soft);
+	border: 1px solid var(--accent-line);
+	border-left: 3px solid var(--accent);
+}
+
+.memos-page.is-owner .memos-tip {
+	display: block;
+}
+
+.memos-page .memos-tip code {
+	padding: 1px 4px;
+	font-size: 12px;
+	color: var(--accent-text);
+	background: var(--accent-soft);
+	border: 1px solid var(--accent-line);
+}
+
+/* ---------- 说说页布局：工具行 + 磁贴流 ----------
+
+   旧版把整个列表包进一张 .side-card 大卡。卡自带 fluent-enter 入场动画 ——
+   动画中的元素会成为「背景根」，卡内任何后代的 backdrop-filter 都不会渲染
+   （与归档页 li 同一个坑）；整块深底板还把每条说说压成平色蓝块。
+   现在外层只做布局（.memos-wrap，无底无边框无动画），每条说说自成一块
+   亚克力磁贴 —— 与归档页同构：模糊、悬停 Reveal、边缘光、入场动画
+   全部挂在磁贴自身上，卡片绑定由 fluent.js 的 cardTargets 负责。 */
+
+.memos-page .memos-wrap.post-comments {
+	margin-top: 0;
+	padding: 0;
+	border-top: 0;
+}
+
+/* 计数在说说页读着别扭（顶层是说说不是评论），藏掉；
+   排序、搜索、刷新留着 —— 往前翻历史要靠搜索。
+   注意必须把选择器压过 Twikoo 自带的 .twikoo .tk-* 规则（它注入得更晚）。 */
+.memos-page .tk-comments .tk-comments-count {
+	display: none;
+}
+
+/* 标题栏 → 工具行：排序分段钮在左，搜索/刷新图标钮在右 */
+.memos-page .tk-comments .tk-comments-title {
+	justify-content: flex-end;
+	margin-bottom: 14px;
+	padding-left: 0;
+	border-left: 0;
+	font-size: 16px;
+	line-height: 1.2;
+}
+
+.memos-page .tk-comments .tk-comments-actions {
+	display: flex;
+	width: 100%;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	white-space: nowrap;
+}
+
+/* 排序：分段控件（同站内 .view-seg：选中段满色主色） */
+.memos-page .tk-comments .tk-comments-sort {
+	display: inline-flex;
+	margin-right: auto;
+	border: 1px solid var(--stroke);
+	background: var(--tile-tint);
+	-webkit-backdrop-filter: blur(14px) saturate(140%);
+	backdrop-filter: blur(14px) saturate(140%);
+}
+
+.memos-page .tk-comments .tk-sort-item {
+	display: inline-flex;
+	align-items: center;
+	height: 28px;
+	padding: 0 13px;
+	font-size: 12px;
+	color: var(--text-mute);
+	background: transparent;
+	border: 0;
+	border-right: 1px solid var(--stroke);
+	transition: background .12s var(--ease), color .12s var(--ease);
+}
+
+.memos-page .tk-comments .tk-sort-item:last-child {
+	border-right: 0;
+}
+
+.memos-page .tk-comments .tk-sort-item:hover {
+	color: var(--text);
+	background: var(--tile-tint-hover);
+}
+
+.memos-page .tk-comments .tk-sort-item.__active,
+.memos-page .tk-comments .tk-sort-item:focus {
+	color: #fff;
+	background: var(--accent);
+}
+
+/* 搜索 / 刷新：图标磁贴（JS pressTargets 另给按压与光效） */
+.memos-page .tk-comments-title .tk-icon.__comments {
+	display: grid;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	box-sizing: border-box;
+	color: var(--text-dim);
+	background: var(--tile-tint);
+	border: 1px solid var(--stroke-strong);
+	-webkit-backdrop-filter: blur(14px) saturate(140%);
+	backdrop-filter: blur(14px) saturate(140%);
+	transition: background .12s var(--ease), color .12s var(--ease);
+}
+
+.memos-page .tk-comments-title .tk-icon.__comments svg {
+	width: 14px;
+	height: 14px;
+}
+
+.memos-page .tk-comments-title .tk-icon.__comments:hover {
+	color: var(--text);
+	background: var(--tile-tint-hover);
+}
+
+.memos-page .tk-comments-title .tk-icon.__comments.__active {
+	color: #fff;
+	background: var(--accent);
+	border-color: transparent;
+	box-shadow: none;
+}
+
+/* 搜索行（点放大镜后展开） */
+.memos-page .tk-comments .tk-comments-search {
+	margin-bottom: 14px;
+}
+
+/* 发布框内部（博主可见）：meta 输入行 */
+.memos-page .tk-comments .tk-meta-input {
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.memos-page .tk-comments .tk-input-group__prepend {
+	color: var(--text-mute);
+	background-color: var(--surface);
+	border-color: var(--stroke-strong);
+	font-size: 12px;
+}
+
+/* OwO 表情按钮：方形图标磁贴 */
+.memos-page .tk-comments .tk-submit-action-icon {
+	width: 30px;
+	height: 30px;
+	padding: 6px;
+	box-sizing: border-box;
+	color: var(--text-dim);
+	background: var(--tile-tint);
+	border: 1px solid var(--stroke-strong);
+	transition: background .12s var(--ease), color .12s var(--ease);
+}
+
+.memos-page .tk-comments .tk-submit-action-icon:hover {
+	color: var(--text);
+	background: var(--tile-tint-hover);
+}
+
+.memos-page .tk-comments .tk-submit-action-icon svg:hover {
+	opacity: 1;
+}
+
+.memos-page .tk-comments .tk-preview-container {
+	margin-left: 0;
+	margin-bottom: 8px;
+	background: var(--code-bg);
+	border: 1px solid var(--stroke);
+}
+
+/* Twikoo 给容器留了 10rem 的下限，空态时下面会空一大块 */
+.memos-page .tk-comments .tk-comments-container {
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+/* ---------- 一条说说 = 一块亚克力磁贴 ---------- */
+
+.memos-page .tk-comments-container > .tk-comment {
+	margin: 0;
+	padding: 16px 18px 14px;
+	background: var(--tile-tint);
+	border: 1px solid var(--stroke);
+	-webkit-backdrop-filter: blur(14px) saturate(140%);
+	backdrop-filter: blur(14px) saturate(140%);
+	animation: fluent-enter .4s var(--ease-out) both;
+	transition: border-color .12s var(--ease);
+}
+
+.memos-page .tk-comments-container > .tk-comment:hover {
+	border-color: var(--stroke-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.memos-page .tk-comments-container > .tk-comment {
+		animation: none;
+	}
+}
+
+/* 头像只取顶层说说的直接子级 >：后代选择器会泄漏进 .tk-replies 的二级头像，
+   把容器撑成 40px，而 Twikoo 又把 img 钉在 1.6rem，导致图容器错位。 */
+.memos-page .tk-comments-container > .tk-comment > .tk-avatar {
+	width: 40px;
+	height: 40px;
+}
+
+.memos-page .tk-comments-container > .tk-comment > .tk-avatar .tk-avatar-img,
+.memos-page .tk-comments-container > .tk-comment > .tk-avatar img.tk-avatar-img {
+	border: 1px solid var(--stroke);
+}
+
+.memos-page .tk-comments-container > .tk-comment .tk-meta {
+	gap: 8px;
+}
+
+.memos-page .tk-comments-container > .tk-comment .tk-nick,
+.memos-page .tk-comments-container > .tk-comment .tk-nick-link {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--text);
+}
+
+.memos-page .tk-comments-container > .tk-comment .tk-nick-link:hover {
+	color: var(--accent-text);
+}
+
+.memos-page .tk-comments-container > .tk-comment .tk-time {
+	font-size: 12px;
+	color: var(--text-mute);
+	font-variant-numeric: tabular-nums;
+}
+
+/* 动作（赞 / 踩 / 回复）：悬停浮起一块浅磁贴，图标随按钮文字色走；
+   JS pressTargets 已收录 .tk-action-link，按下另有按压光效 */
+.memos-page .tk-comments-container > .tk-comment .tk-action-link {
+	padding: 4px 8px;
+	color: var(--text-mute);
+	background: transparent;
+	border: 1px solid transparent;
+	transition: background .12s var(--ease), color .12s var(--ease), border-color .12s var(--ease);
+}
+
+.memos-page .tk-comments-container > .tk-comment .tk-action-icon {
+	color: inherit;
+}
+
+.memos-page .tk-comments-container > .tk-comment .tk-action-link:hover,
+.memos-page .tk-comments-container > .tk-comment .tk-action-link:focus {
+	color: var(--accent-text);
+	background: var(--tile-tint-hover);
+	border-color: var(--stroke);
+}
+
+.memos-page .tk-comments-container > .tk-comment .tk-action-count {
+	font-size: 12px;
+	color: var(--text-mute);
+}
+
+/* 说说正文：这一页的主角，比站点正文色再亮一档 */
+.memos-page .tk-comments-container > .tk-comment > .tk-main > .tk-content {
+	font-size: 15px;
+	line-height: 1.85;
+	color: var(--text);
+}
+
+/* 位置 / 系统 / 浏览器脚注 → 小芯片 */
+.memos-page .tk-comments-container > .tk-comment .tk-extras {
+	margin-top: 12px;
+	gap: 6px;
+	color: var(--text-mute);
+	font-size: 12px;
+}
+
+.memos-page .tk-comments-container > .tk-comment .tk-extra {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 2px 8px;
+	background: var(--surface);
+	border: 1px solid var(--stroke);
+}
+
+.memos-page .tk-comments-container > .tk-comment .tk-extra .tk-icon {
+	width: 11px;
+	height: 11px;
+	opacity: .75;
+}
+
+/* ---------- 二级回复：比说说再轻一档的 surface 小块 ---------- */
+
+.memos-page .tk-comments-container > .tk-comment .tk-replies {
+	margin-top: 12px;
+}
+
+.memos-page .tk-replies .tk-comment {
+	margin-top: 8px;
+	padding: 10px 12px;
+	background: var(--surface);
+	border: 1px solid var(--stroke);
+}
+
+.memos-page .tk-replies .tk-comment:first-child {
+	margin-top: 0;
+}
+
+/* 二级回复头像：容器与 img 一起覆盖 ——
+   Twikoo 自带 .twikoo .tk-replies .tk-avatar .tk-avatar-img { height:1.6rem }（0,4,0）
+   会把 img 高度钉死，容器若被撑大就会图容器错位；这里加一级 .memos-page
+   .tk-comments 把容器和 img 都收回到主题尺寸。 */
+.memos-page .tk-comments .tk-replies .tk-avatar {
+	width: 26px;
+	height: 26px;
+}
+
+.memos-page .tk-comments .tk-replies .tk-avatar .tk-avatar-img,
+.memos-page .tk-comments .tk-replies .tk-avatar img.tk-avatar-img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.memos-page .tk-replies .tk-nick,
+.memos-page .tk-replies .tk-nick-link {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text);
+}
+
+.memos-page .tk-replies .tk-content {
+	margin-top: 6px;
+	font-size: 13.5px;
+	line-height: 1.75;
+	color: var(--text-dim);
+}
+
+.memos-page .tk-replies .tk-extras {
+	margin-top: 8px;
+	font-size: 11.5px;
+}
+
+/* 楼中楼回复框：嵌在磁贴里的浅面板 */
+.memos-page .tk-comment .tk-submit {
+	margin-top: 12px;
+	padding: 12px;
+	background: var(--surface);
+	border: 1px solid var(--stroke);
+}
+
+/* OwO 表情面板：Twikoo 硬编码白底，这里换成主题令牌（明暗皆适配） */
+.memos-page .OwO .OwO-body {
+	color: var(--text);
+	background-color: var(--tile-tint);
+	border: 1px solid var(--stroke-strong);
+}
+
+.memos-page .OwO .OwO-bar {
+	border-top-color: var(--stroke);
+}
+
+.memos-page .OwO .OwO-item:hover {
+	background: var(--tile-tint-hover);
+}
+
+/* ---------- 空态 / 长文展开 / 分页 / 页脚 ---------- */
+
+.memos-page .tk-comments-no {
+	padding: 44px 20px;
+	font-size: 13px;
+	color: var(--text-mute);
+	background: var(--tile-tint);
+	border: 1px dashed var(--stroke-strong);
+}
+
+.memos-page .tk-comments .tk-expand {
+	color: var(--text-dim);
+	background: var(--tile-tint);
+	border: 1px solid var(--stroke);
+}
+
+.memos-page .tk-comments .tk-expand:hover,
+.memos-page .tk-comments .tk-expand:focus {
+	color: var(--text);
+	background: var(--tile-tint-hover);
+}
+
+.memos-page .tk-comments .tk-pagination-pager {
+	width: 30px;
+	height: 30px;
+	margin: 2px;
+	color: var(--text-dim);
+	background: var(--tile-tint);
+	border: 1px solid var(--stroke);
+	transition: background .12s var(--ease), color .12s var(--ease);
+}
+
+.memos-page .tk-comments .tk-pagination-pager:hover {
+	color: var(--text);
+	background: var(--tile-tint-hover);
+}
+
+.memos-page .tk-comments .tk-pagination-pager.__current {
+	color: #fff;
+	background: var(--accent);
+	border-color: transparent;
+}
+
+.memos-page .tk-comments .tk-footer {
+	margin-top: 14px;
+	font-size: 11px;
+	color: var(--text-mute);
+}
+
+/* ---------- 通用：条目（首页的「最近说说」在用） ---------- */
+
+.memos-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.memo {
+	position: relative;
+	padding-left: 52px;
+}
+
+/* 头像占左侧一列，昵称与内容自然排在右边 */
+.memo-head {
+	position: absolute;
+	left: 0;
+	top: 0;
+}
+
+.memo-avatar {
+	display: block;
+	width: 40px;
+	height: 40px;
+	object-fit: cover;
+	background: var(--surface);
+	border: 1px solid var(--stroke);
+}
+
+/* 没有头像（或头像加载失败）时用首字母占位 */
+.memo-avatar-text {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 16px;
+	font-weight: 600;
+	color: #fff;
+	background: var(--accent);
+	border-color: var(--accent);
+}
+
+.memo-who {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 8px;
+	margin-bottom: 6px;
+	font-size: 13px;
+}
+
+.memo-nick {
+	font-weight: 600;
+	color: var(--text);
+}
+
+a.memo-nick:hover {
+	color: var(--accent-text);
+}
+
+.memo-time {
+	font-size: 12px;
+	color: var(--text-mute);
+}
+
+/* 内容沿用正文的排版，贴代码、链接、图片都能正常显示 */
+.memo-body {
+	font-size: 14px;
+	line-height: 1.75;
+	color: var(--text-dim);
+	overflow-wrap: break-word;
+}
+
+.memo-body p {
+	margin: 0 0 8px;
+}
+
+.memo-body p:last-child {
+	margin-bottom: 0;
+}
+
+.memo-body img {
+	max-width: 100%;
+	border: 1px solid var(--stroke);
+}
+
+.memo-body a {
+	color: var(--accent-text);
+	border-bottom: 1px solid var(--stroke-strong);
+}
+
+.memo-body a:hover {
+	color: var(--accent);
+	border-bottom-color: var(--accent);
+}
+
+.memo-body code {
+	padding: 2px 5px;
+	font-size: 13px;
+	color: var(--accent-text);
+	background: var(--accent-soft);
+	border: 1px solid var(--stroke);
+}
+
+.memo-body pre {
+	margin: 10px 0;
+	padding: 12px 14px;
+	overflow-x: auto;
+	font-size: 13px;
+	background: var(--code-bg);
+	border: 1px solid var(--stroke);
+}
+
+.memo-body pre code {
+	padding: 0;
+	background: none;
+	border: 0;
+	color: inherit;
+}
+
+/* ---------- 首页侧栏：最近说说 ----------
+
+   这块挂在 .home-side（236px）里，卡片本身没有内边距 ——
+   按 .card-body 的 14px 自己补；补上之后头像正好和「说说」标题栏的文字对齐，
+   顶部那 14px 是留给标题栏那条分隔线的，不然头像会贴着它。
+   宽度只有两百多像素，条目整体收一号：头像 28px、缩进 38px、
+   正文 13px 且最多露 4 行（要看全文点「查看全部」去说说页）。
+   与上面那张作者名片之间留 16px，和日历卡片自己的 margin-top 一致。 */
+.home-side > * + .memos-recent {
+	margin-top: 16px;
+}
+
+.memos-recent .memos-list {
+	padding: 14px 14px 0;
+}
+
+.memos-recent .memos-empty,
+.memos-recent .memos-more-link {
+	padding-left: 14px;
+	padding-right: 14px;
+}
+
+.memos-recent .memo {
+	padding-left: 38px;
+	padding-bottom: 12px;
+	margin-bottom: 12px;
+	border-bottom: 1px solid var(--stroke);
+}
+
+.memos-recent .memo:last-child {
+	padding-bottom: 0;
+	margin-bottom: 0;
+	border-bottom: 0;
+}
+
+.memos-recent .memo-avatar {
+	width: 28px;
+	height: 28px;
+}
+
+.memos-recent .memo-avatar-text {
+	font-size: 12px;
+}
+
+.memos-recent .memo-who {
+	margin-bottom: 4px;
+	gap: 6px;
+	font-size: 12px;
+}
+
+.memos-recent .memo-body {
+	/* 侧栏只露个大概，点进说说页看全部 */
+	display: -webkit-box;
+	-webkit-line-clamp: 4;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	font-size: 13px;
+	line-height: 1.7;
+}
+
+.memos-recent .memos-more-link {
+	margin-top: 10px;
+}
+
+.memos-empty {
+	margin: 0;
+	font-size: 13px;
+	color: var(--text-mute);
+}
+
+.memos-empty[hidden] {
+	display: none;
+}
+
+/* 首页区块的「查看全部」入口，外观同 .section-more */
+.memos-more-link {
+	display: inline-block;
+	margin-top: 12px;
+	font-size: 13px;
+	color: var(--text-mute);
+}
+
+.memos-more-link:hover {
+	color: var(--accent-text);
+}
+
+/* ---------- 说说页头部 ---------- */
+
+.memos-desc {
+	margin: 0 0 14px;
+	font-size: 13px;
+	color: var(--text-mute);
+}
+
+/* ---------- restart-fluent：最近说说作为首页 side-card 的一块 ---------- */
+.side-card.memos-recent {
+	margin-top: 0;
+	background: var(--tile-tint);
+	border: 1px solid var(--stroke);
+}
+
+.side-card.memos-recent .memos-list { padding: 0; }
+.side-card.memos-recent .memos-empty,
+.side-card.memos-recent .memos-more-link {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+/* ---------- 窄屏 ---------- */
+@media screen and (max-width: 600px) {
+	.memos-page .tk-comments-container > .tk-comment {
+		padding: 14px 14px 12px;
+	}
+
+	.memos-page .tk-comments .tk-comments-actions {
+		flex-wrap: wrap;
+	}
+
+	/* 首页最近说说在手机上再收一号 */
+	.memo {
+		padding-left: 44px;
+	}
+
+	.memo-avatar {
+		width: 32px;
+		height: 32px;
+	}
+}

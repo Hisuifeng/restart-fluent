@@ -1,0 +1,192 @@
+<%#
+	固定音乐播放器（layout.ejs 里紧跟页脚，即 #content 之外）。
+	结构与配色取自设计稿：常驻头部栏（播放键 + 曲名/作者 + 折叠箭头）
+	加一块可折叠面板（时间内联的进度条 + 控制行 + 靠右的音量）。
+
+	「切页不断播」的关键就是这个位置：pjax 换页只替换 #content，
+	播放器节点连同里面的 <audio> 一起留在原地，解码从不中断。
+
+	图标全部内联 SVG，并且「一套状态一套图标」都写在 HTML 里，
+	由 CSS 按 .player 上的状态（.playing / data-mode / data-vol）决定显示哪一个 ——
+	player.js 只需要改属性，不参与画图标，也就没有两处图标表会漂移的问题。
+
+	歌曲数据用 <script type="application/json"> 交给播放器脚本读取；
+	JSON 里的 < 会被转义成 \u003c，否则歌名里出现结束标签会提前闭合脚本块。
+%>
+<%
+	var mu = theme.music || {};
+	var songs = mu.songs || [];
+	var calCfg = theme.calendar || {};
+
+	/* ---------- 图标 ---------- */
+	/* fill：实心三角系列（设计稿里的播放/上下首）；stroke：线性系列（模式/列表/音量） */
+	var ICO_FILL = {
+		play: '<path d="M8 5.5v13l11-6.5-11-6.5z"/>',
+		pause: '<path d="M7 5h3.6v14H7z"/><path d="M13.4 5H17v14h-3.4z"/>',
+		prev: '<path d="M7 6h1.6v12H7z"/><path d="M18 6v12l-8-6 8-6z"/>',
+		next: '<path d="M6 6l8 6-8 6V6z"/><path d="M15.4 6H17v12h-1.6z"/>'
+	};
+	var ICO_LINE = {
+		chevron: '<path d="M6 9l6 6 6-6"/>',
+		modeList: '<path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/>' +
+			'<path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
+		modeSingle: '<path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/>' +
+			'<path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/><path d="M11 10h1.2v4"/>',
+		modeShuffle: '<path d="M16 3h5v5"/><path d="M21 3 3 21"/><path d="M16 21h5v-5"/>' +
+			'<path d="M3 3l6 6"/><path d="M15 15l6 6"/>',
+		list: '<path d="M4 6h16M4 12h16M4 18h9"/>',
+		volUp: '<path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/>' +
+			'<path d="M19 5.5a9 9 0 0 1 0 13"/>',
+		volDown: '<path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/>',
+		volMute: '<path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M22 9l-6 6"/><path d="M16 9l6 6"/>'
+	};
+
+	/* 播放器图标一律用内联 SVG：不依赖系统字体。
+	   Android / iOS 上没有 Segoe MDL2 Assets，用字形会变成方框。 */
+	function ico(name, size) {
+		var body = ICO_FILL[name] || ICO_LINE[name] || ICO_LINE.list;
+		var filled = !!ICO_FILL[name];
+		return '<svg class="player-svg" width="' + (size + 2) + '" height="' + (size + 2) + '"' +
+			' viewBox="0 0 24 24" fill="' + (filled ? 'currentColor' : 'none') + '"' +
+			' stroke="' + (filled ? 'none' : 'currentColor') + '"' +
+			' stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"' +
+			' aria-hidden="true" focusable="false">' + body + '</svg>';
+	}
+
+	/* 节日主题曲：键名是 calendar.holidays 里的 name（跨年份共用）。
+	   值可以是地址字符串，也可以是带 name / artist 的对象。 */
+	var holidaySongs = {};
+	var rawSongs = calCfg.holiday_songs || {};
+	for (var hs in rawSongs) {
+		var hv = rawSongs[hs];
+		if (!hv) continue;
+		if (typeof hv === 'string') {
+			holidaySongs[hs] = { name: '', artist: '', url: url_for(hv) };
+		} else if (hv.url) {
+			holidaySongs[hs] = {
+				name: hv.name || '',
+				artist: hv.artist || '',
+				url: url_for(hv.url)
+			};
+		}
+	}
+
+	/* 节假日区间：客户端拿「今天」去比，命中且有主题曲就把歌顶到列表第一位。
+	   只传区间，不在这里展开 —— 展开要按访客的当前日期算。 */
+	function muDay(v) {
+		if (!v) return '';
+		if (v instanceof Date) {
+			var m = v.getUTCMonth() + 1;
+			var d = v.getUTCDate();
+			return v.getUTCFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (d < 10 ? '0' : '') + d;
+		}
+		return String(v).trim();
+	}
+
+	var holidayRanges = [];
+	(calCfg.holidays || []).forEach(function (h) {
+		if (!h || !h.name || !h.start) return;
+		holidayRanges.push({
+			name: String(h.name),
+			start: muDay(h.start),
+			end: muDay(h.end || h.start)
+		});
+	});
+%>
+<%# 只要有歌可放就渲染：常规歌单为空、但配了节日主题曲时也算有歌。 %>
+<% if (mu.enable && (songs.length || Object.keys(holidaySongs).length)) { %>
+	<div class="player reveal" id="player"
+		data-mode="<%= mu.mode || 'list' %>"
+		data-vol="up"
+		data-volume="<%= (mu.volume === undefined || mu.volume === null) ? 0.7 : mu.volume %>"
+		data-autoplay="<%= mu.autoplay ? '1' : '0' %>"
+		<%# 是否把整首抓成内存对象再播（见 _config.yml 里的 music.blob 说明） %>
+		data-blob="<%= mu.blob === false ? '0' : '1' %>">
+
+		<%# 常驻头部栏：收起时只留这一行 %>
+		<div class="player-head">
+			<button class="player-main" id="player-play" type="button" aria-label="播放" title="播放 / 暂停">
+				<span class="player-ico on-pause"><%- ico('pause', 10) %></span>
+				<span class="player-ico on-idle"><%- ico('play', 10) %></span>
+			</button>
+
+			<p class="player-title">
+				<span class="player-name" id="player-name">—</span>
+				<em class="player-artist" id="player-artist"></em>
+			</p>
+
+			<%# 收起播放器：箭头在展开时转 180° %>
+			<button class="player-fold" id="player-fold" type="button"
+				aria-label="展开播放器" aria-expanded="false" title="展开播放器">
+				<span class="player-ico on-static player-chevron"><%- ico('chevron', 12) %></span>
+			</button>
+		</div>
+
+		<%# 可折叠面板 %>
+		<div class="player-panel" id="player-panel">
+			<div class="player-progress">
+				<span class="player-time" id="player-cur">0:00</span>
+				<div class="player-bar" id="player-bar" role="slider" tabindex="0"
+					aria-label="播放进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+					<i class="player-fill" id="player-fill"></i>
+				</div>
+				<span class="player-time" id="player-dur">0:00</span>
+			</div>
+
+			<%# 只在「拖动到尚未缓冲的位置、需要等一会儿」时出现 %>
+			<p class="player-buffer" id="player-buffer" hidden>缓冲中…</p>
+
+			<div class="player-row">
+				<button class="player-ctrl" id="player-prev" type="button" aria-label="上一首" title="上一首">
+					<span class="player-ico on-static"><%- ico('prev', 14) %></span>
+				</button>
+				<button class="player-ctrl" id="player-next" type="button" aria-label="下一首" title="下一首">
+					<span class="player-ico on-static"><%- ico('next', 14) %></span>
+				</button>
+
+				<span class="player-sep" aria-hidden="true"></span>
+
+				<%# 三套图标都在，由 .player[data-mode] 决定显示哪一个 %>
+				<button class="player-ctrl" id="player-mode" type="button" aria-label="播放模式" title="播放模式">
+					<span class="player-ico on-mode-list"><%- ico('modeList', 14) %></span>
+					<span class="player-ico on-mode-single"><%- ico('modeSingle', 14) %></span>
+					<span class="player-ico on-mode-shuffle"><%- ico('modeShuffle', 14) %></span>
+				</button>
+				<button class="player-ctrl" id="player-list-btn" type="button" aria-label="播放列表" aria-expanded="false" title="播放列表">
+					<span class="player-ico on-static"><%- ico('list', 14) %></span>
+				</button>
+
+				<div class="player-volume">
+					<button class="player-mute" id="player-mute" type="button" aria-label="静音" title="静音 / 取消静音">
+						<span class="player-ico on-vol-up"><%- ico('volUp', 13) %></span>
+						<span class="player-ico on-vol-down"><%- ico('volDown', 13) %></span>
+						<span class="player-ico on-vol-mute"><%- ico('volMute', 13) %></span>
+					</button>
+					<div class="player-bar player-vol-bar" id="player-vol-bar" role="slider" tabindex="0"
+						aria-label="音量" aria-valuemin="0" aria-valuemax="100" aria-valuenow="70">
+						<i class="player-fill" id="player-vol-fill"></i>
+					</div>
+				</div>
+			</div>
+
+			<%# 播放列表：点列表键展开，收起面板时一并隐藏 %>
+			<ul class="player-list" id="player-list"></ul>
+		</div>
+
+		<audio id="player-audio" preload="auto"></audio>
+
+		<script type="application/json" id="player-data"><%-
+			JSON.stringify({
+				songs: songs.map(function (s) {
+					return {
+						name: s.name || '',
+						artist: s.artist || '',
+						url: url_for(s.url)
+					};
+				}),
+				holidayRanges: holidayRanges,
+				holidaySongs: holidaySongs
+			}).replace(/</g, '\\u003c')
+		%></script>
+	</div>
+<% } %>

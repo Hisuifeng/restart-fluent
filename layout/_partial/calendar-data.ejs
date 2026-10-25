@@ -1,0 +1,87 @@
+<%#
+	首页日历的数据源（layout/index.ejs 里渲染一次，月历与节假日提示共用）。
+
+	输出成 <script type="application/json">，由 js/calendar.js 读取：
+	  posts       有文章的日期 -> [{t: 标题, u: 链接}]
+	  holidays    法定节假日区间（客户端再展开成逐天）
+	  workdays    调休上班日
+	  提示文案    服务端原样透传，客户端按「今天的日期」决定显示哪一条 ——
+	              站点是静态的，构建日不等于访问日，所以判断必须在浏览器里做。
+
+	日期一律输出「年-月-日」字符串，不交给 Date 的时区推断，否则容易差一天。
+%>
+<%
+	/* include 进来的是独立函数，父模板里 var 出来的 calCfg 在这里看不到，
+	   所以直接从 theme 取一次 —— theme 本身是 locals 里的数据，任何模板都拿得到。 */
+	var calCfg = theme.calendar || {};
+	var calApi = calCfg.api || {};
+
+	/* 接口源兜底默认值：配置里没写 urls 时用这三家，按顺序尝试。
+	   {year} 由客户端替换成要查询的年份。
+	   首选 holiday-cn（纯 JSON、带国务院通知原文链接、走 jsDelivr CDN），
+	   再退 timor.tech（国内可达性好），最后 raw.githubusercontent。 */
+	var calDefaultUrls = [
+		'https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/{year}.json',
+		'https://timor.tech/api/holiday/year/{year}',
+		'https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'
+	];
+
+	/* 站点文章按天归组。同一天多篇全部收进来，日历上点开就能看到。 */
+	var calPosts = {};
+	site.posts.forEach(function (p) {
+		var k = p.date.format('YYYY-MM-DD');
+		(calPosts[k] = calPosts[k] || []).push({
+			t: p.title || k,
+			u: url_for(p.path)
+		});
+	});
+
+	/* YAML 里没写引号的 2025-01-01 会被解析成 Date 对象，这里统一成 yyyy-mm-dd。
+	   取 UTC 值：js-yaml 给的是 UTC 零点的 Date，用本地取值在西半球会差一天。 */
+	function calDay(v) {
+		if (!v) return '';
+		if (v instanceof Date) {
+			var m = v.getUTCMonth() + 1;
+			var d = v.getUTCDate();
+			return v.getUTCFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (d < 10 ? '0' : '') + d;
+		}
+		return String(v).trim();
+	}
+
+	var calHolidays = [];
+	(calCfg.holidays || []).forEach(function (h) {
+		if (!h || !h.name || !h.start) return;
+		calHolidays.push({
+			name: String(h.name),
+			start: calDay(h.start),
+			end: calDay(h.end || h.start)
+		});
+	});
+
+	var calWorkdays = [];
+	(calCfg.workdays || []).forEach(function (d) {
+		var s = calDay(d);
+		if (s) calWorkdays.push(s);
+	});
+
+	var calData = {
+		posts: calPosts,
+		holidays: calHolidays,
+		workdays: calWorkdays,
+		promptText: calCfg.prompt_text || '',
+		promptTexts: calCfg.prompt_texts || {},
+		workdayPrompt: calCfg.prompt_workday === true,
+		workdayText: calCfg.prompt_workday_text || '',
+		/* 接口兜底：客户端只在「内置表没覆盖的年份」才会用到它们，
+		   所以这里只做透传与类型收敛，不做任何请求。 */
+		api: {
+			enable: calApi.enable !== false,
+			mode: calApi.mode === 'always' ? 'always' : 'missing',
+			urls: ((calApi.urls && calApi.urls.length) ? calApi.urls : calDefaultUrls).map(String),
+			timeout: +calApi.timeout || 4000,
+			cacheDays: +calApi.cache_days || 30,
+			retryHours: +calApi.retry_hours || 6
+		}
+	};
+%>
+<script type="application/json" id="cal-data"><%- JSON.stringify(calData).replace(/</g, '\\u003c') %></script>

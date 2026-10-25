@@ -1,0 +1,87 @@
+<%
+	/* 归档：按年 → 月分组。page.posts 在 /archives/、/archives/YYYY/、
+	   /archives/YYYY/MM/ 三种入口下都由 Hexo 给好。 */
+	var posts = page.posts ? page.posts.sort('-date') : [];
+	var groups = [];
+	posts.forEach(function (p) {
+		var y = p.date.format('YYYY');
+		var m = p.date.format('MM');
+		var g = null;
+		for (var i = 0; i < groups.length; i++) {
+			if (groups[i].year === y) { g = groups[i]; break; }
+		}
+		if (!g) { g = { year: y, count: 0, months: [] }; groups.push(g); }
+		g.count++;
+		var mg = null;
+		for (var j = 0; j < g.months.length; j++) {
+			if (g.months[j].month === m) { mg = g.months[j]; break; }
+		}
+		if (!mg) { mg = { month: m, posts: [] }; g.months.push(mg); }
+		mg.posts.push(p);
+	});
+	var latest = posts.length ? posts.first().date.format('YYYY-MM-DD') : '--';
+
+	/* 年份导航始终基于全站文章算，年份归档页 page.posts 只有当年文章。 */
+	var navYears = [];
+	var navMap = {};
+	site.posts.sort('-date').forEach(function (p) {
+		var y = p.date.format('YYYY');
+		if (!navMap[y]) { navMap[y] = 0; navYears.push(y); }
+		navMap[y]++;
+	});
+%>
+
+<div class="page-shell">
+	<div class="archive-stats">
+		<div class="archive-stat">
+			<b><%= posts.length %></b>
+			<span>篇文章</span>
+		</div>
+		<div class="archive-stat">
+			<b><%= groups.length %></b>
+			<span>个年份</span>
+		</div>
+		<div class="archive-stat">
+			<b><%= latest %></b>
+			<span>最近更新</span>
+		</div>
+	</div>
+
+	<% if (!groups.length) { %>
+		<div class="empty-state">
+			<i class="fa fa-inbox" aria-hidden="true"></i>
+			<p>还没有可以归档的文章。</p>
+		</div>
+	<% } else { %>
+		<nav class="archive-nav" aria-label="按年份跳转">
+			<% navYears.forEach(function (y) { %>
+				<a class="chip<%= page.year == y ? ' is-active' : '' %>" href="<%- url_for('/archives/' + y + '/') %>"><%= y %><sup><%= navMap[y] %></sup></a>
+			<% }) %>
+		</nav>
+
+		<% groups.forEach(function (g) { %>
+			<section class="archive-group" id="year-<%= g.year %>">
+				<h2 class="archive-year">
+					<%= g.year %> 年
+					<span><%= g.count %> 篇</span>
+				</h2>
+
+				<% g.months.forEach(function (mg) { %>
+					<h3 class="archive-month"><%= mg.month %> 月</h3>
+					<ul class="archive-list">
+						<% mg.posts.forEach(function (p) { %>
+							<li class="archive-row">
+								<a class="archive-item reveal" href="<%- url_for(p.path) %>">
+									<time class="archive-date" datetime="<%= p.date.format('YYYY-MM-DD') %>">
+										<%= p.date.format('MM-DD') %>
+									</time>
+									<span class="archive-title"><%= p.title %></span>
+								</a>
+							</li>
+						<% }) %>
+					</ul>
+				<% }) %>
+			</section>
+		<% }) %>
+	<% } %>
+</div>

@@ -1,0 +1,27 @@
+<%
+	var tagArr = [];
+	site.tags.forEach(function (t) { tagArr.push(t); });
+	tagArr.sort(function (a, b) { return b.length - a.length; });
+%>
+<div class="page-shell">
+	<% if (page.content && page.content.trim()) { %>
+		<div class="rich page-body"><%- page.content %></div>
+	<% } %>
+
+	<p class="term-summary">共 <%= tagArr.length %> 个标签。</p>
+
+	<% if (!tagArr.length) { %>
+		<div class="empty-state">
+			<i class="fa fa-tags" aria-hidden="true"></i>
+			<p>还没有建立标签。</p>
+		</div>
+	<% } else { %>
+		<div class="tag-cloud">
+			<% tagArr.forEach(function (t) { %>
+				<a class="tag" href="<%- url_for(t.path) %>">
+					<%= t.name %><sup><%= t.length %></sup>
+				</a>
+			<% }) %>
+		</div>
+	<% } %>
+</div>

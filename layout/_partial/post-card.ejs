@@ -1,0 +1,36 @@
+<%
+	/* 信息流里的一张文章卡。数据全部来自 Hexo 的 post 对象，
+	   摘要从 excerpt（没有就退回正文）剥掉 HTML 后截断。 */
+	var p = post;
+	var digest = fluent_digest(p, 118);
+
+	var cat = (p.categories && p.categories.length) ? p.categories.toArray()[0] : null;
+	var tags = (p.tags && p.tags.length) ? p.tags.toArray().slice(0, 3) : [];
+	var hasTime = (typeof symbolsTime === 'function');
+	var readTime = hasTime ? symbolsTime(p).replace(/\s*(mins?\.|minutes?)\s*$/i, ' 分钟') : '';
+%>
+<article class="post-card reveal">
+	<div class="post-top">
+		<% if (cat) { %>
+			<a class="post-cat" href="<%- url_for(cat.path) %>"><%= cat.name %></a>
+		<% } else { %>
+			<span class="post-cat is-muted">未分类</span>
+		<% } %>
+		<time class="post-date" datetime="<%= p.date.format('YYYY-MM-DD') %>"><%= p.date.format('YYYY-MM-DD') %></time>
+	</div>
+
+	<h3 class="post-title"><a href="<%- url_for(p.path) %>"><%= p.title %></a></h3>
+
+	<% if (digest) { %>
+		<p class="post-digest"><%= digest %></p>
+	<% } %>
+
+	<div class="post-foot">
+		<% tags.forEach(function (tag) { %>
+			<a class="tag" href="<%- url_for(tag.path) %>"><%= tag.name %></a>
+		<% }) %>
+		<% if (readTime) { %>
+			<span class="post-time"><i class="fa fa-clock-o" aria-hidden="true"></i><%= readTime %></span>
+		<% } %>
+	</div>
+</article>

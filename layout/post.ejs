@@ -1,0 +1,179 @@
+<%
+	/* 阅读页：正文 + 目录 + 分享 + 评论。
+	   目录在宽屏是右侧栏，窄屏收进左下角的抽屉；阅读进度固定在页顶。 */
+	var hasCount = (typeof symbolsCount === 'function');
+	var hasTime = (typeof symbolsTime === 'function');
+	var readTime = hasTime ? symbolsTime(page).replace(/\s*(mins?\.|minutes?)\s*$/i, ' 分钟') : '';
+	var cats = (page.categories && page.categories.length) ? page.categories.toArray() : [];
+	var tags = (page.tags && page.tags.length) ? page.tags.toArray() : [];
+
+	var tocCfg = theme.toc || {};
+	var tocHtml = tocCfg.enable === false ? '' : toc(page.content, { list_number: false });
+	var tocOn = !!(tocHtml && tocHtml.trim());
+
+	var cm = theme.comments || {};
+	var cmOn = cm.enable !== false && !!cm.env_id;
+	var shareOn = !(theme.share && theme.share.enable === false);
+
+	function plainText(s) {
+		return String(s || '')
+			.replace(/<pre[\s\S]*?<\/pre>/gi, ' ')
+			.replace(/<[^>]+>/g, ' ')
+			.replace(/&[#\w]+;/g, ' ')
+			.replace(/\s+/g, ' ')
+			.trim();
+	}
+	var shareDesc = page.description || plainText(page.content).slice(0, 96);
+%>
+
+<div class="read-progress" id="read-progress" aria-hidden="true"><i id="read-progress-bar"></i></div>
+
+<div class="post-wrap">
+	<main class="post-main">
+		<article class="reader">
+			<header class="reader-head">
+				<% if (cats.length) { %>
+					<p class="reader-kicker">
+						<% cats.forEach(function (cat) { %>
+							<a href="<%- url_for(cat.path) %>"><%= cat.name %></a>
+						<% }) %>
+					</p>
+				<% } %>
+
+				<h1 class="reader-title"><%= page.title %></h1>
+
+				<div class="reader-meta">
+					<time datetime="<%= page.date.format('YYYY-MM-DD HH:mm:ss') %>">
+						<i class="fa fa-calendar-o" aria-hidden="true"></i><%= page.date.format('YYYY-MM-DD') %>
+					</time>
+					<% if (hasCount) { %>
+						<span class="dot" aria-hidden="true"></span>
+						<span><i class="fa fa-file-text-o" aria-hidden="true"></i><%= symbolsCount(page) %> 字</span>
+					<% } %>
+					<% if (readTime) { %>
+						<span class="dot" aria-hidden="true"></span>
+						<span><i class="fa fa-clock-o" aria-hidden="true"></i><%= readTime %></span>
+					<% } %>
+					<% if (page.updated && page.updated.format('YYYY-MM-DD') !== page.date.format('YYYY-MM-DD')) { %>
+						<span class="dot" aria-hidden="true"></span>
+						<span>更新于 <%= page.updated.format('YYYY-MM-DD') %></span>
+					<% } %>
+				</div>
+			</header>
+
+			<div class="rich article-body post-content">
+				<%- page.content %>
+			</div>
+
+			<footer class="reader-foot">
+				<% if (tags.length) { %>
+					<div class="reader-tags">
+						<span class="reader-tags-label">标签</span>
+						<% tags.forEach(function (tag) { %>
+							<a class="tag" href="<%- url_for(tag.path) %>"><%= tag.name %></a>
+						<% }) %>
+					</div>
+				<% } %>
+
+				<% if (shareOn) { %>
+					<section class="share-box" aria-labelledby="share-title">
+						<p class="share-title" id="share-title">分享这篇文章</p>
+
+						<div class="share-poster">
+							<div class="share-poster-main">
+								<p class="share-poster-brand"><%= theme.title %></p>
+								<h3 class="share-poster-title"><%= page.title %></h3>
+								<% if (shareDesc) { %>
+									<p class="share-poster-desc"><%= shareDesc %></p>
+								<% } %>
+								<p class="share-poster-meta"><%= theme.author %> · <%= page.date.format('YYYY-MM-DD') %></p>
+							</div>
+							<div class="share-poster-qr">
+								<div class="share-qr" id="share-qr"></div>
+								<span class="share-qr-tip">扫码阅读</span>
+							</div>
+						</div>
+
+						<div class="share-btns">
+							<a class="share-btn" target="_blank" rel="noopener noreferrer"
+								href="https://service.weibo.com/share/share.php?url=<%= encodeURIComponent(page.permalink) %>&amp;title=<%= encodeURIComponent(page.title) %>">
+								<i class="fa fa-weibo" aria-hidden="true"></i>微博
+							</a>
+							<a class="share-btn" target="_blank" rel="noopener noreferrer"
+								href="https://connect.qq.com/widget/shareqq/index.html?url=<%= encodeURIComponent(page.permalink) %>&amp;title=<%= encodeURIComponent(page.title) %>">
+								<i class="fa fa-qq" aria-hidden="true"></i>QQ
+							</a>
+							<a class="share-btn" target="_blank" rel="noopener noreferrer"
+								href="https://twitter.com/intent/tweet?url=<%= encodeURIComponent(page.permalink) %>&amp;text=<%= encodeURIComponent(page.title) %>">
+								<i class="fa fa-twitter" aria-hidden="true"></i>X
+							</a>
+							<button class="share-btn" type="button" data-share="copy">
+								<i class="fa fa-link" aria-hidden="true"></i>复制链接
+							</button>
+						</div>
+					</section>
+				<% } %>
+
+				<nav class="post-nav" aria-label="上下篇">
+					<% if (page.prev) { %>
+						<a class="post-nav-item" href="<%- url_for(page.prev.path) %>" rel="prev">
+							<span class="nav-dir">上一篇</span>
+							<span class="nav-title"><%= page.prev.title %></span>
+						</a>
+					<% } else { %>
+						<span class="post-nav-item is-empty"></span>
+					<% } %>
+					<% if (page.next) { %>
+						<a class="post-nav-item is-next" href="<%- url_for(page.next.path) %>" rel="next">
+							<span class="nav-dir">下一篇</span>
+							<span class="nav-title"><%= page.next.title %></span>
+						</a>
+					<% } else { %>
+						<span class="post-nav-item is-empty"></span>
+					<% } %>
+				</nav>
+			</footer>
+		</article>
+
+		<% if (cmOn) { %>
+			<%- include('_partial/comments') %>
+		<% } else if (cm.enable !== false) { %>
+			<!-- restart-fluent: 评论已开启，但 comments.env_id 未填写，跳过渲染 -->
+		<% } %>
+	</main>
+
+	<% if (tocOn) { %>
+		<aside class="post-side">
+			<nav class="toc-box" aria-label="文章目录">
+				<p class="box-title">目录</p>
+				<div class="toc-content" id="toc-content">
+					<%- tocHtml %>
+				</div>
+			</nav>
+		</aside>
+	<% } %>
+</div>
+
+<% if (tocOn) { %>
+	<button class="toc-toggle" id="toc-toggle" type="button" aria-label="打开目录" aria-expanded="false">
+		<i class="fa fa-list-ul" aria-hidden="true"></i>
+	</button>
+
+	<div class="toc-drawer" id="toc-drawer" role="dialog" aria-modal="true" aria-label="文章目录">
+		<div class="toc-drawer-mask" id="toc-drawer-mask"></div>
+		<div class="toc-drawer-panel">
+			<div class="toc-drawer-head">
+				<span>目录</span>
+				<button id="toc-drawer-close" type="button" aria-label="关闭目录">
+					<span aria-hidden="true">×</span>
+				</button>
+			</div>
+			<div class="toc-content">
+				<%- tocHtml %>
+			</div>
+		</div>
+	</div>
+<% } %>
+
+<%- js('js/post.js') %>
+<% if (cmOn) { %><%- js('js/comments.js') %><% } %>

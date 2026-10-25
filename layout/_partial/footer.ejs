@@ -1,0 +1,35 @@
+<%
+	var fc = theme.footer || {};
+	var since = fc.since || date(Date.now(), 'YYYY');
+	/* RSS 入口从标题栏移到页脚：标题栏按 UWP 规范只放返回键、标题和侧栏键 */
+	var rssCfg = theme.rss || {};
+	var feedCfg = config.feed || {};
+	var rssOn = rssCfg.enable !== false;
+	var feedPath = rssCfg.path || (typeof feedCfg.path === 'string' ? feedCfg.path
+		: (feedCfg.path && (feedCfg.path.atom || feedCfg.path.rss2)) || 'atom.xml');
+%>
+<footer class="feed-foot">
+	<div class="feed-foot-inner">
+		<p class="foot-copy">
+			&copy; <%= since %>&ndash;<%= date(Date.now(), 'YYYY') %>
+			<span><%= theme.author %></span>
+		</p>
+		<% if (theme.subtitle) { %>
+			<p class="foot-saying">&ldquo;<%= theme.subtitle %>&rdquo;</p>
+		<% } %>
+		<p class="foot-meta">
+			<% if (rssOn) { %>
+				<a href="<%- url_for(feedPath) %>" target="_blank" rel="noopener"><%= rssCfg.title || 'RSS 订阅' %></a>
+				<span class="foot-dot">·</span>
+			<% } %>
+			<% if (fc.icp) { %>
+				<a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"><%= fc.icp %></a>
+				<span class="foot-dot">·</span>
+			<% } %>
+			<% if (fc.powered_by !== false) { %>
+				由 <a href="https://hexo.io/" target="_blank" rel="noopener noreferrer">Hexo</a> 驱动
+				<span class="foot-dot">·</span> 主题 <span><%= theme.name || 'restart-fluent' %></span>
+			<% } %>
+		</p>
+	</div>
+</footer>

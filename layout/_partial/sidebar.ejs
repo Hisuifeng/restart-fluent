@@ -1,0 +1,90 @@
+<%
+	/* 侧栏只负责导航与外观：品牌、搜索、导航、外观。
+	   分类入口已移除；站点概览与作者卡片在首页 side-card。
+	   外观区独立于滚动区，始终贴在侧栏底部。
+	   折叠后收成 64px 的图标栏，交互方式对齐 Win10 开始菜单左栏。 */
+	var ap = theme.appearance || {};
+	var accentCfg = theme.accent || {};
+	var palette = accentCfg.palette || [];
+	var defaultAccent = accentCfg.default || '#0078d4';
+	var searchCfg = theme.search || {};
+%>
+<aside class="dash" id="sidebar" aria-label="站点导航">
+	<div class="dash-body">
+		<%# 折叠态下搜索框收成图标按钮；点击后展开侧栏并聚焦输入框 %>
+		<button class="dash-search-btn icon-btn reveal" id="dash-search-btn" type="button"
+			aria-label="搜索" title="搜索">
+			<i class="fa fa-search" aria-hidden="true"></i>
+		</button>
+
+		<form class="side-search" action="<%- url_for('/search') %>" method="get" role="search">
+			<label class="sr-only" for="side-search-input">站内搜索</label>
+			<i class="fa fa-search" aria-hidden="true"></i>
+			<input id="side-search-input" type="search" name="q" autocomplete="off" spellcheck="false"
+				placeholder="<%= searchCfg.placeholder || '搜索标题、标签或正文…' %>">
+		</form>
+
+		<nav class="side-nav" aria-label="主导航">
+			<p class="ctrl-label">导航</p>
+			<% for (var name in theme.menus) {
+				var href = url_for(theme.menus[name]);
+				var icon = (theme.menu_icons && theme.menu_icons[name]) || 'fa-circle-o';
+				var active = (name === '首页') ? is_home() : is_current(theme.menus[name]);
+			%>
+				<a class="nav-item reveal<%= active ? ' active' : '' %>" href="<%- href %>"
+					title="<%= name %>" aria-label="<%= name %>"<%= active ? ' aria-current="page"' : '' %>>
+					<i class="fa <%= icon %>" aria-hidden="true"></i>
+					<span class="nav-text"><%= name %></span>
+				</a>
+			<% } %>
+		</nav>
+	</div>
+
+	<section class="dash-look" aria-labelledby="side-look-title">
+		<p class="ctrl-label" id="side-look-title">外观</p>
+
+		<div class="swatches" role="group" aria-label="主题色">
+			<% palette.forEach(function (c) {
+				var on = c.color === defaultAccent;
+			%>
+				<button class="swatch<%= on ? ' active' : '' %>" type="button"
+					style="--c:<%= c.color %>" data-accent="<%= c.color %>"
+					aria-label="主题色：<%= c.name %>" aria-pressed="<%= on ? 'true' : 'false' %>"
+					title="<%= c.name %>"></button>
+			<% }) %>
+		</div>
+
+		<div class="switch-row">
+			<span>紧凑模式</span>
+			<button class="switch<%= ap.compact ? ' on' : '' %>" type="button"
+				data-toggle="compact" role="switch" aria-checked="<%= ap.compact ? 'true' : 'false' %>"
+				aria-label="紧凑模式"></button>
+		</div>
+		<div class="switch-row">
+			<span>光效与回弹</span>
+			<button class="switch<%= ap.effects === false ? '' : ' on' %>" type="button"
+				data-toggle="effects" role="switch" aria-checked="<%= ap.effects === false ? 'false' : 'true' %>"
+				aria-label="光效与回弹"></button>
+		</div>
+		<div class="look-row">
+			<span class="look-label">明暗</span>
+			<div class="theme-modes" role="group" aria-label="明暗模式">
+				<button class="theme-mode" type="button" data-theme-mode="auto" aria-pressed="false">跟随系统</button>
+				<button class="theme-mode" type="button" data-theme-mode="light" aria-pressed="false">浅色</button>
+				<button class="theme-mode" type="button" data-theme-mode="dark" aria-pressed="false">深色</button>
+			</div>
+		</div>
+	</section>
+
+	<div class="dash-foot">
+		<button class="dash-toggle reveal" id="dash-toggle" type="button"
+			aria-label="<%= ap.sidebar_collapsed ? '展开侧栏' : '折叠侧栏' %>"
+			title="<%= ap.sidebar_collapsed ? '展开侧栏' : '折叠侧栏' %>"
+			aria-controls="sidebar" aria-expanded="<%= ap.sidebar_collapsed ? 'false' : 'true' %>">
+			<svg class="dash-ico" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+				<path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11" fill="none" stroke="currentColor"
+					stroke-width="1.5" stroke-linecap="square"/>
+			</svg>
+		</button>
+	</div>
+</aside>

@@ -1,0 +1,146 @@
+<%
+	var profile = theme.profile || {};
+	var about = theme.about || {};
+	var avatar = theme.avatar || profile.avatar || '';
+
+	var aboutLinks = [];
+	for (var lk in (theme.links || {})) {
+		if (theme.links[lk]) aboutLinks.push({ name: lk, url: theme.links[lk] });
+	}
+	if (profile.email) aboutLinks.push({ name: 'mail', url: 'mailto:' + profile.email });
+
+	var firstPost = site.posts.length ? site.posts.sort('date').first() : null;
+	var runDays = firstPost ? Math.max(1, Math.ceil((Date.now() - firstPost.date.valueOf()) / 86400000)) : 0;
+
+	var cm = theme.comments || {};
+	var cmOn = cm.enable !== false && !!cm.env_id;
+
+	var hasContact = !!(profile.email || profile.github || profile.weibo || profile.wechat_qr);
+	var introLines = String(about.intro || '').split(/\r?\n/).filter(function (s) { return s.trim(); });
+%>
+
+<div class="page-shell about-page">
+	<article class="about-profile" aria-labelledby="about-name">
+		<header class="about-hero">
+			<a class="about-avatar-link" href="<%- url_for('/about') %>" aria-label="关于 <%= theme.author %>">
+				<% if (avatar) { %>
+					<img class="about-avatar" src="<%- url_for(avatar) %>" alt="<%= theme.author %>" loading="lazy">
+				<% } else { %>
+					<span class="about-avatar about-avatar-fallback" aria-hidden="true"><%= (theme.author || '?').slice(0, 1) %></span>
+				<% } %>
+			</a>
+
+			<div class="about-identity">
+				<h1 class="about-name" id="about-name"><%= theme.author %></h1>
+				<% if (profile.motto) { %>
+					<p class="about-motto"><%= profile.motto %></p>
+				<% } %>
+				<% if (aboutLinks.length) { %>
+					<ul class="about-social">
+						<% aboutLinks.forEach(function (s) {
+							var external = !/^mailto:/i.test(s.url);
+						%>
+							<li>
+								<a href="<%- s.url %>" title="<%= s.name %>"<%= external ? ' target="_blank" rel="noopener noreferrer"' : '' %>>
+									<%- include('_partial/social-icon', { name: s.name }) %><span class="sr-only"><%= s.name %></span>
+								</a>
+							</li>
+						<% }) %>
+					</ul>
+				<% } %>
+			</div>
+		</header>
+
+		<div class="about-body">
+			<main class="about-main">
+				<% if (introLines.length) { %>
+					<section class="about-section">
+						<h2 class="about-section-title">简介</h2>
+						<div class="rich about-intro">
+							<% introLines.forEach(function (line) { %>
+								<p><%= line %></p>
+							<% }) %>
+						</div>
+					</section>
+				<% } %>
+
+				<% if (about.facts && about.facts.length) { %>
+					<section class="about-section">
+						<h2 class="about-section-title">近况</h2>
+						<ul class="about-facts">
+							<% about.facts.forEach(function (f) { %>
+								<li><span><%= f.k %></span><b><%= f.v %></b></li>
+							<% }) %>
+						</ul>
+					</section>
+				<% } %>
+
+				<% if (page.content && page.content.trim()) { %>
+					<section class="about-section">
+						<h2 class="about-section-title">自述</h2>
+						<div class="rich about-story"><%- page.content %></div>
+					</section>
+				<% } %>
+			</main>
+
+			<aside class="about-side">
+				<section class="about-side-block">
+					<h2 class="about-section-title">本站</h2>
+					<ul class="about-stats">
+						<li><span>文章</span><b><%= site.posts.length %></b></li>
+						<li><span>分类</span><b><%= site.categories.length %></b></li>
+						<li><span>标签</span><b><%= site.tags.length %></b></li>
+						<% if (runDays) { %>
+							<li><span>运行</span><b><%= runDays %> 天</b></li>
+						<% } %>
+					</ul>
+				</section>
+
+				<% if (hasContact) { %>
+					<section class="about-side-block">
+						<h2 class="about-section-title">联系</h2>
+						<ul class="about-contact">
+							<% if (profile.email) { %>
+								<li>
+									<i class="fa fa-envelope-o" aria-hidden="true"></i>
+									<span>邮箱</span>
+									<a href="mailto:<%= profile.email %>"><%= profile.email %></a>
+								</li>
+							<% } %>
+							<% if (profile.github) { %>
+								<li>
+									<i class="fa fa-github" aria-hidden="true"></i>
+									<span>GitHub</span>
+									<a href="<%= profile.github %>" target="_blank" rel="noopener noreferrer"><%= profile.github %></a>
+								</li>
+							<% } %>
+							<% if (profile.weibo) { %>
+								<li>
+									<i class="fa fa-weibo" aria-hidden="true"></i>
+									<span>微博</span>
+									<a href="<%= profile.weibo %>" target="_blank" rel="noopener noreferrer"><%= profile.weibo %></a>
+								</li>
+							<% } %>
+							<% if (profile.wechat_qr) { %>
+								<li class="about-wechat">
+									<i class="fa fa-qrcode" aria-hidden="true"></i>
+									<span>微信</span>
+									<img src="<%- url_for(profile.wechat_qr) %>" alt="微信二维码" loading="lazy">
+									<% if (profile.wechat_tip) { %>
+										<small><%= profile.wechat_tip %></small>
+									<% } %>
+								</li>
+							<% } %>
+						</ul>
+					</section>
+				<% } %>
+			</aside>
+		</div>
+	</article>
+
+	<% if (cmOn) { %>
+		<%- include('_partial/comments') %>
+	<% } %>
+</div>
+
+<% if (cmOn) { %><%- js('js/comments.js') %><% } %>

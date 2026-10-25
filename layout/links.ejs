@@ -1,0 +1,40 @@
+<%
+	var friends = theme.friends || [];
+%>
+<div class="page-shell">
+	<div class="links-head">
+		<p class="term-summary">共 <%= friends.length %> 位友链。</p>
+		<% if (theme.links_apply) { %>
+			<a class="btn" href="<%= theme.links_apply %>" target="_blank" rel="noopener noreferrer">申请友链</a>
+		<% } %>
+	</div>
+
+	<% if (page.content && page.content.trim()) { %>
+		<div class="rich page-body"><%- page.content %></div>
+	<% } %>
+
+	<% if (!friends.length) { %>
+		<div class="empty-state">
+			<i class="fa fa-link" aria-hidden="true"></i>
+			<p>还没有添加友链。</p>
+		</div>
+	<% } else { %>
+		<div class="friend-grid">
+			<% friends.forEach(function (f) { %>
+				<a class="friend-card" href="<%= f.url %>" target="_blank" rel="noopener noreferrer">
+					<% if (f.avatar) { %>
+						<img class="friend-avatar" src="<%- url_for(f.avatar) %>" alt="<%= f.name %>" loading="lazy">
+					<% } else { %>
+						<span class="friend-avatar friend-avatar-fallback" aria-hidden="true"><%= f.name.charAt(0) %></span>
+					<% } %>
+					<span class="friend-body">
+						<span class="friend-name"><%= f.name %></span>
+						<% if (f.desc) { %>
+							<span class="friend-desc"><%= f.desc %></span>
+						<% } %>
+					</span>
+				</a>
+			<% }) %>
+		</div>
+	<% } %>
+</div>

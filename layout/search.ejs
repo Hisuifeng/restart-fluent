@@ -1,0 +1,31 @@
+<%
+	var sp = theme.search || {};
+%>
+<div class="page-shell search-page">
+	<div class="search-panel">
+		<div class="search-box" id="search-box"
+			data-index="<%- url_for(sp.path || '/search.xml') %>"
+			data-max="<%= sp.max_results || 50 %>">
+			<i class="fa fa-search" aria-hidden="true"></i>
+			<input type="search" id="search-input" autocomplete="off" spellcheck="false"
+				placeholder="<%= sp.placeholder || '输入关键词' %>" aria-label="站内搜索">
+			<button type="button" id="search-clear" aria-label="清空"><span aria-hidden="true">×</span></button>
+		</div>
+
+		<p class="search-status" id="search-status">正在加载索引…</p>
+		<div class="post-list" id="search-results" hidden></div>
+	</div>
+
+	<% if (page.content && page.content.trim()) { %>
+		<div class="rich page-body search-body"><%- page.content %></div>
+	<% } %>
+
+	<noscript>
+		<div class="empty-state">
+			<i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+			<p>站内搜索需要启用 JavaScript。</p>
+		</div>
+	</noscript>
+</div>
+
+<%- js('js/search.js') %>

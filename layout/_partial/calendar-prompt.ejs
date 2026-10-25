@@ -1,0 +1,16 @@
+<%#
+	节假日提示条（首页正文顶部）。
+
+	默认是 hidden：今天到底是不是节假日只有浏览器知道 —— 站点是静态的，
+	构建日往往不是访客打开的日期。js/calendar.js 读 #cal-data 判断，
+	命中才填文案并显示，没命中就一直是隐藏的，不会占位。
+
+	文案与开关都在主题 _config.yml 的 calendar 段：
+	  prompt_text        通用文案，占位符 {name} {day} {total} {date}
+	  prompt_texts       按节日名覆盖（键名要和 holidays 里的 name 一致）
+	  prompt_workday     调休上班日是否也提示
+%>
+<div class="cal-prompt" id="cal-prompt" hidden>
+	<i class="fa fa-flag-o" aria-hidden="true"></i>
+	<span class="cal-prompt-text" id="cal-prompt-text"></span>
+</div>

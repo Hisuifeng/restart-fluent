@@ -1,0 +1,89 @@
+/* ==========================================================================
+   icons.css — Win10 图标层
+   Windows 上用 Segoe MDL2 Assets 覆盖 Font Awesome 的字形，不改模板结构。
+   其它设备（Android / iOS / macOS / Linux）没有这个字体，
+   直接把整套映射收进 html.has-mdl2 —— 没有该 class 时回落 Font Awesome
+   自带字形，不会出现方框豆腐字。
+   ========================================================================== */
+
+html.has-mdl2 .fa,
+html.has-mdl2 .fas,
+html.has-mdl2 .far,
+html.has-mdl2 .fab {
+	font-family: "Segoe MDL2 Assets", "Segoe Fluent Icons", sans-serif !important;
+	font-style: normal !important;
+	font-weight: 400 !important;
+	line-height: 1;
+	vertical-align: -0.08em;
+}
+
+html.has-mdl2 .fa::before,
+html.has-mdl2 .fas::before,
+html.has-mdl2 .far::before,
+html.has-mdl2 .fab::before {
+	font-family: inherit !important;
+}
+
+/* 导航与常用动作 */
+html.has-mdl2 .fa-bars::before { content: "\E700"; }        /* 三横线 */
+html.has-mdl2 .fa-home::before { content: "\E80F"; }
+html.has-mdl2 .fa-search::before { content: "\E721"; }
+html.has-mdl2 .fa-archive::before { content: "\E7B8"; }     /* Package / 归档盒 */
+html.has-mdl2 .fa-user-o::before,
+html.has-mdl2 .fa-user::before { content: "\E77B"; }       /* Contact / 关于 */
+html.has-mdl2 .fa-arrow-up::before { content: "\E74A"; }
+html.has-mdl2 .fa-link::before { content: "\E71B"; }
+html.has-mdl2 .fa-external-link::before { content: "\E8A7"; }
+/* RSS / GitHub 沿用 Font Awesome 品牌字形 */
+html.has-mdl2 .fa-rss::before {
+	font-family: "FontAwesome" !important;
+	content: "\f09e";
+}
+html.has-mdl2 .fa-qrcode::before { content: "\E8B0"; }
+html.has-mdl2 .fa-paper-plane::before { content: "\E724"; }
+html.has-mdl2 .fa-envelope::before,
+html.has-mdl2 .fa-envelope-o::before { content: "\E715"; }
+html.has-mdl2 .fa-comment-o::before { content: "\E90A"; }
+html.has-mdl2 .fa-exclamation-circle::before { content: "\E7BA"; }
+html.has-mdl2 .fa-circle-o::before { content: "\E91F"; }
+html.has-mdl2 .fa-clock-o::before { content: "\E823"; }
+html.has-mdl2 .fa-calendar-o::before { content: "\E787"; }
+html.has-mdl2 .fa-star::before { content: "\E734"; }
+html.has-mdl2 .fa-flag-o::before { content: "\E7C1"; }
+
+/* 内容与列表 */
+html.has-mdl2 .fa-folder-o::before { content: "\E8B7"; }
+html.has-mdl2 .fa-folder-open-o::before { content: "\E838"; }
+html.has-mdl2 .fa-file-text-o::before { content: "\E8A5"; }
+html.has-mdl2 .fa-tag::before,
+html.has-mdl2 .fa-tags::before { content: "\E8EC"; }
+html.has-mdl2 .fa-list-ul::before { content: "\E8FD"; }
+html.has-mdl2 .fa-th-large::before { content: "\E8A9"; }
+html.has-mdl2 .fa-inbox::before { content: "\E8B5"; }
+html.has-mdl2 .fa-indent::before { content: "\E8E4"; }
+html.has-mdl2 .fa-outdent::before { content: "\E8E5"; }
+html.has-mdl2 .fa-code-fork::before,
+html.has-mdl2 .fa-git::before { content: "\E943"; }
+html.has-mdl2 .fa-tv::before { content: "\E7F4"; }
+
+/* 明暗 */
+html.has-mdl2 .fa-moon-o::before { content: "\E708"; }
+html.has-mdl2 .fa-sun-o::before { content: "\E706"; }
+
+/* 媒体 */
+html.has-mdl2 .fa-play::before { content: "\E768"; }
+html.has-mdl2 .fa-pause::before { content: "\E769"; }
+
+/* 社交与站点 */
+html.has-mdl2 .fa-github::before {
+	font-family: "FontAwesome" !important;
+	content: "\f09b";
+}
+html.has-mdl2 .fa-qq::before { content: "\E77B"; }
+html.has-mdl2 .fa-weibo::before,
+html.has-mdl2 .fa-twitter::before { content: "\E774"; }
+html.has-mdl2 .fa-zhihu::before { content: "\E8A5"; }
+html.has-mdl2 .fa-envira::before { content: "\E8BE"; }
+
+/* Font Awesome 4.7 没有 zhihu 字形，非 Windows 用地球兜底 */
+html:not(.has-mdl2) .fa-zhihu::before { content: "\f0ac"; }

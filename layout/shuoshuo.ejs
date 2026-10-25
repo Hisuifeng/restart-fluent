@@ -1,0 +1,45 @@
+<%
+	var cm = theme.comments || {};
+	var mm = theme.memos || {};
+	var memosPath = mm.path || '/shuoshuo/';
+	var memosOn = mm.enable !== false && cm.enable !== false && !!cm.env_id;
+
+	var tkVersion = cm.version || '2.0.12';
+	var tkSrc = (cm.src || 'https://cdn.jsdelivr.net/npm/twikoo@{version}/dist/twikoo.min.js')
+		.replace(/\{version\}/g, tkVersion);
+%>
+
+<% if (!memosOn) { %>
+	<div class="page-shell memos-page">
+		<div class="empty-state">
+			<i class="fa fa-comment-o" aria-hidden="true"></i>
+			<p>说说还没有启用：请在主题配置里打开说说，并填写评论云函数地址。</p>
+		</div>
+	</div>
+<% } else { %>
+	<div class="page-shell memos-page">
+		<p class="memos-desc"><%= mm.desc || '没成篇的碎念，随手记在这里。' %></p>
+
+		<section class="memos-wrap post-comments">
+			<p class="memos-tip">
+				「发送」要能点，得先把上面的昵称和邮箱填上；填过一次浏览器就记住了。
+			</p>
+			<div class="twikoo" id="tcomment"
+				data-src="<%= tkSrc %>"
+				data-env-id="<%= cm.env_id %>"
+				data-lang="<%= cm.lang || 'zh-CN' %>"
+				data-path="<%= memosPath %>"></div>
+		</section>
+	</div>
+
+	<script type="application/json" id="memos-config"><%-
+		JSON.stringify({
+			envId: cm.env_id,
+			path: memosPath,
+			recentCount: mm.recent_count || 3,
+			ownerNick: mm.owner_nick || ''
+		}).replace(/</g, '\\u003c')
+	%></script>
+
+	<%- js('js/comments.js') %>
+<% } %>

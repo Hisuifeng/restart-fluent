@@ -1,0 +1,9 @@
+<%#
+	社交站点 -> Font Awesome 图标类名。侧栏与后续的关于页共用一份，
+	避免两处各写一张表、加站点时漏改一处。
+	未收录的键名回退到「外链」图标。
+%>
+<% var socialIcon = { github: 'fa-github', gitee: 'fa-git', zhihu: 'fa-zhihu',
+	juejin: 'fa-envira', weibo: 'fa-weibo', telegram: 'fa-paper-plane',
+	qq: 'fa-qq', mail: 'fa-envelope', email: 'fa-envelope',
+	rss: 'fa-rss', twitter: 'fa-twitter', bilibili: 'fa-tv' }[name] || 'fa-external-link'; %><i class="fa <%= socialIcon %>" aria-hidden="true"></i>

@@ -1,0 +1,195 @@
+<%
+	/* 首页 = hero 幻灯片 + 最新文章的信息流 + 右侧 side-card。
+	   分类条是真实分类页入口，不做「只过滤当前页」的假筛选；
+	   网格/列表是纯展示偏好，由 js/fluent.js 记忆。 */
+	var homeCfg = theme.home || {};
+	var allPosts = (page.posts || site.posts).sort('-date').toArray();
+	var cap = parseInt(theme.recent_count, 10);
+	if (!(cap > 0)) cap = 10;
+	var visible = allPosts.slice(0, cap);
+	/* feature 只是「读取」最新一篇（peek），不能 shift 移出列表：
+	   幻灯片第 2 页的最新发布必须同时出现在下方「最新文章」里。 */
+	var showFeature = homeCfg.feature !== false && (page.current || 1) === 1 && visible.length > 0;
+	var feature = showFeature ? visible[0] : null;
+	var sideCats = site.categories.sort('-length').limit(8);
+	var view = homeCfg.view === 'list' ? 'list' : 'grid';
+	var hiddenCount = Math.max(0, allPosts.length - cap);
+	/* side-card 只属于首页；分类/标签页在本阶段仍复用 index 模板，
+	   不给它们塞首页侧栏。 */
+	var showSide = is_home();
+
+	var calCfg = theme.calendar || {};
+	var calWidget = calCfg.enable !== false && calCfg.widget !== false;
+	var calPrompt = calCfg.enable !== false && calCfg.prompt !== false;
+
+	var cmCfg = theme.comments || {};
+	var memosCfg = theme.memos || {};
+	var memosHomeOn = memosCfg.enable !== false && memosCfg.home !== false &&
+		cmCfg.enable !== false && !!cmCfg.env_id;
+
+	/* 首页 hero：第 1 页封面（文案可在 home.hero 配置），第 2 页起为「最新发布」，
+	   每页取一篇最新文章；总页数由 home.hero.pages 决定（1 = 只有封面）。 */
+	var heroCfg = homeCfg.hero || {};
+	var heroProfile = theme.profile || {};
+	var heroOn = is_home() && (page.current || 1) === 1 && allPosts.length > 0
+		&& heroCfg.enable !== false;
+	var heroEyebrow = heroCfg.eyebrow || (theme.title + (config.subtitle ? ' · ' + config.subtitle : ''));
+	var heroTitle = heroCfg.title || theme.description || config.description || theme.title;
+	var heroSlogan = heroCfg.slogan || heroProfile.motto || config.description || '';
+	var heroPages = parseInt(heroCfg.pages, 10);
+	if (!(heroPages > 0)) heroPages = 2;
+	var heroPosts = (heroOn && feature) ? allPosts.slice(0, Math.max(0, heroPages - 1)) : [];
+	var heroSlideCount = heroOn ? 1 + heroPosts.length : 0;
+	var heroImage = heroCfg.image || '';
+	var heroDim = (heroCfg.dim === undefined || heroCfg.dim === null) ? 0.52 : heroCfg.dim;
+%>
+
+<div class="home-layout<%= showSide ? '' : ' no-side' %>">
+	<div class="home-main">
+		<% if (heroOn) { %>
+			<section class="home-hero hero-slider" data-hero-slider
+				aria-roledescription="carousel" aria-label="首页展示">
+				<div class="hero-inner">
+					<div class="hero-slides">
+						<div class="hero-slide hero-slide-cover is-active<%= heroImage ? ' has-image' : '' %>" data-hero-slide aria-hidden="false"
+							<% if (heroImage) { %>style="--hero-image:url('<%- url_for(heroImage) %>');--hero-dim:<%= heroDim %>;"<% } %>>
+							<div class="hero-copy">
+								<p class="hero-month"><%= heroEyebrow %></p>
+								<h1 class="hero-title" id="hero-title"><%= heroTitle %></h1>
+								<% if (heroSlogan) { %>
+									<p class="hero-slogan"><%= heroSlogan %></p>
+								<% } %>
+								<div class="hero-actions">
+									<a class="btn btn-accent" href="#post-list">开始阅读</a>
+									<a class="btn" href="<%- url_for('/about') %>">关于我</a>
+								</div>
+							</div>
+						</div>
+
+						<% heroPosts.forEach(function (p) {
+							var pTitle = p.title || '';
+							if (pTitle.length > 36) pTitle = pTitle.slice(0, 36) + '…';
+							var pDigest = fluent_digest(p, 150);
+						%>
+							<div class="hero-slide" data-hero-slide aria-hidden="true">
+								<div class="hero-copy">
+									<p class="hero-month">最新发布</p>
+									<h2 class="hero-title"><%= pTitle %></h2>
+									<% if (pDigest) { %>
+										<p class="hero-slogan"><%= pDigest %></p>
+									<% } %>
+									<div class="hero-actions">
+										<a class="btn btn-accent" href="<%- url_for(p.path) %>">阅读全文</a>
+									</div>
+								</div>
+							</div>
+						<% }) %>
+					</div>
+				</div>
+
+				<% if (heroSlideCount > 1) { %>
+					<div class="hero-controls">
+						<button class="hero-nav" type="button" data-hero-prev aria-label="上一页">&lt;</button>
+						<div class="hero-dots" role="group" aria-label="幻灯片页码">
+							<% for (var hi = 0; hi < heroSlideCount; hi++) { %>
+								<button class="hero-dot<%= hi === 0 ? ' is-active' : '' %>" type="button" data-hero-to="<%= hi %>"
+									aria-label="第 <%= hi + 1 %> 页"<%= hi === 0 ? ' aria-current="true"' : '' %>><%= hi + 1 %></button>
+							<% } %>
+						</div>
+						<button class="hero-nav" type="button" data-hero-next aria-label="下一页">&gt;</button>
+					</div>
+				<% } %>
+			</section>
+		<% } %>
+
+		<% if (calWidget || calPrompt) { %>
+			<%- include('_partial/calendar-data') %>
+		<% } %>
+		<% if (calPrompt) { %>
+			<%- include('_partial/calendar-prompt') %>
+		<% } %>
+
+		<div class="feed-toolbar">
+			<nav class="chips" aria-label="按分类浏览">
+				<a class="chip is-active" href="<%- url_for('/') %>">全部</a>
+				<% sideCats.forEach(function (cat) { %>
+					<a class="chip" href="<%- url_for(cat.path) %>"><%= cat.name %><sup><%= cat.length %></sup></a>
+				<% }) %>
+			</nav>
+
+			<div class="view-seg" role="group" aria-label="列表视图">
+				<button class="seg-btn<%= view === 'grid' ? ' is-active' : '' %>" type="button"
+					data-view="grid" aria-label="网格视图" title="网格视图" aria-pressed="<%= view === 'grid' %>">
+					<i class="fa fa-th-large" aria-hidden="true"></i>
+				</button>
+				<button class="seg-btn<%= view === 'list' ? ' is-active' : '' %>" type="button"
+					data-view="list" aria-label="列表视图" title="列表视图" aria-pressed="<%= view === 'list' %>">
+					<i class="fa fa-bars" aria-hidden="true"></i>
+				</button>
+			</div>
+		</div>
+
+		<% if (!allPosts.length) { %>
+			<div class="empty-state">
+				<i class="fa fa-inbox" aria-hidden="true"></i>
+				<p>还没有发布任何文章。</p>
+			</div>
+		<% } else { %>
+			<div class="section-head">
+				<h2 class="section-title">最新文章</h2>
+				<a class="section-more" href="<%- url_for('/archives') %>">
+					全部 <%= allPosts.length %> 篇
+				</a>
+			</div>
+
+			<div class="post-list<%= view === 'list' ? ' list-view' : '' %>" id="post-list">
+				<% visible.forEach(function (p) { %>
+					<%- include('_partial/post-card', { post: p }) %>
+				<% }) %>
+			</div>
+
+			<% if (!visible.length) { %>
+				<div class="empty-state">
+					<p>没有更多文章了，去 <a href="<%- url_for('/archives') %>">归档</a> 看看。</p>
+				</div>
+			<% } %>
+
+			<%- include('_partial/pagination') %>
+
+			<% if (hiddenCount > 0) { %>
+				<a class="home-more" href="<%- url_for('/archives') %>">
+					查看更早的 <%= hiddenCount %> 篇文章
+				</a>
+			<% } %>
+		<% } %>
+	</div>
+
+	<% if (showSide) { %>
+		<aside class="home-side" aria-label="首页侧栏">
+			<%- include('_partial/side-card') %>
+			<% if (calWidget) { %>
+				<%- include('_partial/calendar') %>
+			<% } %>
+			<% if (memosHomeOn) { %>
+				<%- include('_partial/memos-recent') %>
+			<% } %>
+		</aside>
+	<% } %>
+</div>
+
+<% if (memosHomeOn) { %>
+<script type="application/json" id="memos-config"><%-
+	JSON.stringify({
+		envId: cmCfg.env_id,
+		path: memosCfg.path || '/shuoshuo/',
+		recentCount: memosCfg.recent_count || 3,
+		ownerNick: memosCfg.owner_nick || ''
+	}).replace(/</g, '\\u003c')
+%></script>
+<% } %>
+<% if (calWidget || calPrompt) { %>
+	<%- js('js/calendar.js') %>
+<% } %>
+<% if (heroSlideCount > 1) { %>
+	<%- js('js/hero-slider.js') %>
+<% } %>

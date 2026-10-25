@@ -1,0 +1,19 @@
+<%
+	var posts = page.posts ? page.posts.sort('-date') : [];
+%>
+<div class="page-shell">
+	<p class="term-summary">共 <%= posts.length %> 篇文章，按发布时间倒序排列。</p>
+
+	<% if (!posts.length) { %>
+		<div class="empty-state">
+			<i class="fa fa-folder-open-o" aria-hidden="true"></i>
+			<p>这个分类下还没有文章。</p>
+		</div>
+	<% } else { %>
+		<div class="post-list">
+			<% posts.forEach(function (p) { %>
+				<%- include('_partial/post-card', { post: p }) %>
+			<% }) %>
+		</div>
+	<% } %>
+</div>

@@ -1,0 +1,259 @@
+# ==========================================================================
+#  restart-fluent —— Hexo 主题配置
+#
+#  插件依赖见 README.md「插件与功能对照表」。最简可用需要：
+#    hexo-renderer-ejs / hexo-renderer-marked / hexo-generator-index
+#    hexo-generator-archive / hexo-generator-category / hexo-generator-tag
+#  搜索、RSS、阅读时长、站点地图分别需要对应插件，未安装时对应区块会自动隐藏。
+# ==========================================================================
+
+name: restart-fluent
+
+# ============================ 全站 ============================
+
+# 站点身份：侧栏品牌、<title>、meta；副标题用于页脚引言。
+title: Hexo
+subtitle: 记录与分享技术与生活
+description: 描述
+keywords: Hexo,博客,主题,技术,生活
+author: Your Name
+# 头像：主题 source/ 相对路径、/ 开头站点路径或完整 https 地址；留空显示作者名首字。
+avatar: images/head.jpg
+
+# 外观（访客在顶栏/侧栏的改动存在浏览器里，以下只是初始值）
+appearance:
+  scheme: auto             # 初始明暗：dark | light | auto（auto = 跟随系统）
+  acrylic: 24              # 亚克力模糊强度（px），0 = 不模糊
+  compact: false           # 卡片紧凑模式
+  effects: true            # Reveal 高光 / 边缘光 / 按压回弹
+  sidebar_collapsed: false # 侧栏初始折叠为图标栏
+
+# 壁纸（全站背景）。enable: false 退回纯色背景。
+wallpaper:
+  enable: true
+  image: /images/wallpaper.jpg
+  opacity: 0.2
+  dim: 0.42                # 图片上的暗色遮罩，0 不压暗
+
+# 主题色：default 渲染成 CSS 变量；palette 是侧栏色板，default 必须在其中。
+accent:
+  default: '#e06c75'
+  palette:
+    - { name: 蓝, color: '#0078d4' }
+    - { name: 青, color: '#00b7c3' }
+    - { name: 绿, color: '#107c10' }
+    - { name: 紫, color: '#8764b8' }
+    - { name: 洋红, color: '#c239b3' }
+    - { name: 红, color: '#e81123' }
+    - { name: 橙, color: '#ff8c00' }
+    - { name: 粉, color: '#e06c75'}
+
+# 导航（侧栏）：键 = 显示文字，值 = 路径，按此顺序渲染。
+menus:
+  首页: /
+  说说: /shuoshuo
+  归档: /archives
+  标签: /tags
+  分类: /categories
+  友链: /links
+  关于: /about
+# 导航图标：键与 menus 的文字一致（Font Awesome 4.7）。
+menu_icons:
+  首页: fa-home
+  说说: fa-comment-o
+  归档: fa-archive
+  标签: fa-tags
+  分类: fa-folder-o
+  友链: fa-link
+  关于: fa-user-o
+
+# 社交外链（键名见 layout/_partial/social-icon.ejs，未收录的回退「外链」图标）
+# 示例：github: https://github.com/yourname
+links: {}
+
+# RSS 入口（订阅文件由站点的 hexo-generator-feed 生成）
+rss:
+  enable: true
+  path: ''                 # 留空跟随站点 feed.path（默认 atom.xml）
+  title: RSS 订阅
+
+# 页脚
+footer:
+  since: 2025
+  icp: ''                  # 备案号，留空不显示
+  powered_by: true
+
+# 音乐播放器
+# 站内音乐放 source/music/ 下写 /music/文件名.mp3；外链直接写 https:// 地址。
+music:
+  enable: true
+  volume: 0.1              # 初始音量 0~1
+  autoplay: false          # 进站自动播放；被浏览器拦截时不报错，首次交互续上
+  keep_playing: true       # 切页不断播；关掉退回整页跳转
+  mode: list               # list 列表循环 / single 单曲循环 / shuffle 随机
+  blob: true               # 整首抓进内存再播，拖进度条不依赖服务器 Range 支持
+  # 歌单：只有 url 必填。正文插 {% music <url> %} 或 {% music 1 %} 引用第几首；
+  # 没登记的地址也能用，首次点击自动补进列表。留空则不渲染播放器。
+  # 示例：
+  # songs:
+  #   - name: Song Name
+  #     artist: Artist
+  #     url: "/music/song.mp3"
+  songs: []
+
+# 评论 Twikoo（文章页 / 关于页 / 说说页共用；env_id 留空整块不渲染）
+comments:
+  enable: true
+  env_id: ''               # Twikoo 云函数地址；留空整块不渲染
+  version: '2.0.12'
+  # npmmirror 同名包（国内可达；jsdelivr 国内实测 31.8s/2.7KB/s）
+  src: 'https://registry.npmmirror.com/twikoo/{version}/files/dist/twikoo.min.js'
+  lang: zh-CN
+  path: ''                 # 区分评论的路径，留空用 location.pathname
+
+# ============================ 首页 ============================
+
+# 信息流条数
+recent_count: 10
+home:
+  feature: true            # 最新一篇进幻灯片「最新发布」页；该文章同时保留在下方列表
+  view: grid               # 初始视图：grid | list
+  # 幻灯片：第 1 页封面，第 2 页起每页展示一篇最新文章
+  hero:
+    enable: true
+    pages: 2               # 总页数：1 = 只有封面；N = 封面 + 最新 N-1 篇
+    eyebrow: ''            # 封面小标题，留空用 站点名 · 副标题
+    title: ''              # 封面大标题，留空用 description
+    slogan: ''             # 封面口号，留空用 motto
+    image: /images/wallpaper.jpg
+    dim: 0.25              # 图片上的暗色遮罩，0 不压暗
+
+# 右栏月历与节假日提示（节日主题曲联动上面的 music）
+calendar:
+  enable: true             # 总开关：关掉则日历、提示、脚本都不加载
+  widget: true             # 月历本体
+  prompt: true             # 今天是法定节假日时在首页顶部提示
+  prompt_text: '今天是{name}，假期第 {day} 天，共 {total} 天。' # 占位符 {name}{day}{total}{date}
+  prompt_texts:            # 节日专属文案，键名与 holidays 的 name 一致
+    春节: '新年好！今天是春节 {total} 长假的第 {day} /  天，烟火起，照人间，敬此新年！'
+    国庆节: '今天是国庆假期 {total} 天的第 {day} 天，愿祖国繁荣富强，国泰民安。'
+  prompt_workday: false    # 调休上班日提示（魔鬼开，默认关）
+  prompt_workday_text: '今天是悲伤的调休上班日TwT'
+  # 法定假期（闭区间，单天只写 start；日期必须加引号，否则被解析成 Date）。
+  # 手写只到 2026，更晚年份由下面的 api 补齐；每年按国务院公告补几行即可。
+  holidays:
+    # ---- 2025 ----
+    - { name: 元旦, start: '2025-01-01' }
+    - { name: 春节, start: '2025-01-28', end: '2025-02-04' }
+    - { name: 清明节, start: '2025-04-04', end: '2025-04-06' }
+    - { name: 劳动节, start: '2025-05-01', end: '2025-05-05' }
+    - { name: 端午节, start: '2025-05-31', end: '2025-06-02' }
+    - { name: 国庆节, start: '2025-10-01', end: '2025-10-08' }
+    # ---- 2026 ----
+    - { name: 元旦, start: '2026-01-01', end: '2026-01-03' }
+    - { name: 春节, start: '2026-02-15', end: '2026-02-23' }
+    - { name: 清明节, start: '2026-04-04', end: '2026-04-06' }
+    - { name: 劳动节, start: '2026-05-01', end: '2026-05-05' }
+    - { name: 端午节, start: '2026-06-19', end: '2026-06-21' }
+    - { name: 中秋节, start: '2026-09-25', end: '2026-09-27' }
+    - { name: 国庆节, start: '2026-10-01', end: '2026-10-07' }
+  # 调休上班日（没人想知道这个，日历上压暗日期）
+  workdays:
+    - '2025-01-26'
+    - '2025-02-08'
+    - '2025-04-27'
+    - '2025-09-28'
+    - '2025-10-11'
+    - '2026-01-04'
+    - '2026-02-14'
+    - '2026-02-28'
+    - '2026-05-09'
+    - '2026-09-20'
+    - '2026-10-10'
+  # 节日主题曲：键名同 holidays；命中当天插到歌单第一位，不打断正在放的歌。
+  # 需 music.enable 打开；值支持站内/外链地址，或带 name / artist 的对象。
+  # 示例：
+  # holiday_songs:
+  #   春节:
+  #     name: 春节序曲
+  #     artist: 中国国家交响乐团
+  #     url: "/music/spring.mp3"
+  holiday_songs: {}
+  # 假期接口兜底：内置表没有的年份按 urls 顺序请求，按年缓存到浏览器；
+  # 任何失败只影响该年标注，不报错、不阻塞，也不带 cookies。
+  api:
+    enable: true
+    mode: missing           # missing = 只补内置表没有的年份；always = 一律以接口为准
+    urls:                  # {year} 会替换成要查询的年份，按顺序尝试
+      - 'https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/{year}.json'
+      - 'https://timor.tech/api/holiday/year/{year}'
+      - 'https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'
+    timeout: 4000          # 单源最长等待（毫秒），超时换下一个
+    cache_days: 30         # 年度数据缓存天数
+    retry_hours: 6         # 接口说「还没这一年数据」后的重试间隔（小时）
+
+# ============================ 文章页 ============================
+
+# 目录：宽屏显示在正文右侧，窄屏收进左下角抽屉。
+toc:
+  enable: true
+
+# 分享：海报、二维码与微博 / QQ / X / 复制链接。
+share:
+  enable: true
+
+# ============================ 搜索页 ============================
+
+# 需要站点安装 hexo-generator-search 生成索引。
+search:
+  path: /search.xml
+  placeholder: 搜索标题、标签或正文…
+
+# ============================ 关于页 ============================
+
+# 正文写在 source/about/index.md，这里是页头自述与资料卡。
+about:
+  intro: |
+    有朋自远方来，不亦乐乎。
+  facts: []
+
+# 个人资料：关于页资料卡 + 首页侧栏「关于作者」；motto 兼作幻灯片封面口号兜底。
+profile:
+  avatar: images/head.jpg
+  motto: ''
+  email: ''
+  github: ''
+  weibo: ''
+  wechat_qr: ''
+  wechat_tip: ''
+
+# ============================ 友链页 ============================
+
+# 页面来自 source/links.md（front-matter 写 layout: links）
+# 示例：
+# friends:
+#   - name: Friend
+#     url: https://example.com/
+#     avatar: https://example.com/avatar.png
+#     desc: 一句介绍
+links_apply: ''
+friends: 
+  - name: 光 - Hikari的博客
+    url: https://hisuifeng.github.io/
+    avatar: 'https://hisuifeng.github.io/images/head.jpg'
+    desc: 神（入）级别的开发者
+
+# ============================ 说说页 ============================
+
+# 说说 = 固定路径下的 Twikoo 评论：复用 comments.env_id（留空则整块不渲染），
+# 与文章评论靠 path 隔离。memos.home 控制首页的「最近说说」区块。
+memos:
+  enable: true
+  home: true
+  path: /shuoshuo/         # 改它等于换存储空间，已有说说不迁移，一般不动
+  recent_count: 3          # 首页展示几条
+  # 谁能看到「发说说」输入框；留空用 Twikoo 的 HIDE_ADMIN_CRYPT。
+  # 只是不给页面入口、不是权限。
+  owner_nick: ''
+  title: 说说              # 首页区块 / 页面标题
+  desc: 没成篇的碎念，随手记在这里。

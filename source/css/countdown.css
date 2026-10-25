@@ -1,0 +1,343 @@
+/* ==========================================================================
+   countdown.css — 正 / 倒计时卡片（{% countdown %}，逻辑见 js/countdown.js）
+
+   翻牌骨架取自设计稿 test.html，配色与版式按主题重做：
+     · 卡片收窄居中（520px）：这是块「仪表」，铺满整行只会显得空；
+     · day 模式把天数做成主角（46px 主色），标题与目标日期一小一大衬着它；
+     · time 模式的牌面用深炭色（设计稿那种机械感），每列底下标 时/分/秒，
+       上半与下半之间留一道极浅的牌缝；冒号用主色，给整块添一点站内色；
+       暗色模式下牌面比页面亮一档，免得在暗底上炸出一块黑；
+     · 全站零圆角，所以设计稿里的 14px 圆角一律去掉。
+   ========================================================================== */
+.countdown {
+	--cd-face: #23262b;
+	--cd-face-2: #1a1d21;
+	--cd-ink: #f2f3f5;
+	--cd-ink-dim: #9aa0a8;
+	--cd-w: 54px;
+	--cd-h: 78px;
+	--cd-gap: 4px;
+
+	/* 与正文音乐卡同一套磁贴尺寸：通栏、左主色条、平面底 */
+	max-width: none;
+	margin: 20px 0;
+	padding: 16px;
+	background: var(--tile-tint);
+	border: 1px solid var(--c-border);
+	text-align: left;
+	transition: background .14s var(--ease), border-color .14s var(--ease);
+}
+
+.countdown:hover {
+	background: var(--tile-tint-hover);
+	border-color: var(--stroke-strong);
+}
+
+/* 暗色：牌面比页面底色亮一档，缝与描边继续用令牌 */
+:root[data-theme="dark"] .countdown {
+	--cd-face: #2b2f36;
+	--cd-face-2: #23272d;
+	--cd-ink: #eceef1;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]) .countdown {
+		--cd-face: #2b2f36;
+		--cd-face-2: #23272d;
+		--cd-ink: #eceef1;
+	}
+}
+
+/* ---------- 卡片标题：小、灰、字距开一点，只当眉题 ---------- */
+.cd-title {
+	margin: 0 0 14px;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: .16em;
+	text-indent: .16em;
+	color: var(--c-muted);
+}
+
+/* ---------- day 模式 ---------- */
+/* 一句话整行连着排：读出来就是「离新年还有78天」。
+   不用 flex —— 那会往词与数字之间塞间距，还会把它拆成几个块。 */
+.cd-sentence {
+	margin: 0;
+	font-size: 15px;
+	line-height: 1.4;
+	color: var(--c-text);
+}
+
+/* 天数：主角，但仍是行内元素，跟着句子走。行高 1 免得撑高整行 */
+.cd-num {
+	font-size: 46px;
+	font-weight: 700;
+	line-height: 1;
+	letter-spacing: -0.03em;
+	color: var(--c-primary);
+	font-variant-numeric: tabular-nums;
+}
+
+.cd-unit {
+	font-size: 14px;
+	color: var(--c-muted);
+}
+
+/* 当天：整句放大成主角，和「还有 N 天」拉开情绪 */
+.countdown.is-today .cd-sentence {
+	font-size: 26px;
+	font-weight: 700;
+	letter-spacing: .04em;
+	color: var(--c-primary);
+}
+
+/* 目标日期：一行小字，补上卡片下半截的空 */
+.cd-meta {
+	margin: 14px 0 0;
+	font-size: 12px;
+	letter-spacing: .06em;
+	color: var(--c-faint);
+	font-variant-numeric: tabular-nums;
+}
+
+/* ---------- time 模式 ---------- */
+/* 「离新年还有」与「N 天」同一行：读起来是一句话，下面是钟面 */
+.cd-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: center;
+	gap: 8px;
+	margin: 0 0 14px;
+}
+
+.cd-lead {
+	margin: 0;
+	font-size: 13px;
+	color: var(--c-muted);
+}
+
+/* 钟面单独居中；天数已经跟着上面那行走了 */
+.cd-clock {
+	display: flex;
+	justify-content: center;
+}
+
+/* 那枚「N 天」：不做成小牌子了，就是句子里的一段 ——
+   去掉边框和底色，只留数字上的主题色；与 .cd-lead 同处一行 */
+.cd-days {
+	display: flex;
+	align-items: baseline;
+	gap: 4px;
+	margin: 0;
+	padding: 0;
+	background: none;
+	border: 0;
+}
+
+.cd-days b {
+	font-size: 24px;
+	font-weight: 700;
+	line-height: 1.2;
+	color: var(--c-primary);
+	font-variant-numeric: tabular-nums;
+}
+
+.cd-days span {
+	font-size: 11px;
+	letter-spacing: .1em;
+	color: var(--c-muted);
+}
+
+.cd-clock-body {
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+}
+
+/* 一列 = 两位数字 + 单位标签 */
+.cd-unit-col {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 7px;
+}
+
+.cd-unit-col em {
+	font-size: 11px;
+	font-style: normal;
+	letter-spacing: .18em;
+	text-indent: .18em;
+	color: var(--c-muted);
+}
+
+.cd-group {
+	display: flex;
+	gap: var(--cd-gap);
+}
+
+/* ---------- 单个数字位 ---------- */
+.cd-digit {
+	position: relative;
+	width: var(--cd-w);
+	height: var(--cd-h);
+	perspective: 700px;
+}
+
+/* ---------- 卡片的四个面 ---------- */
+.cd-face {
+	position: absolute;
+	left: 0;
+	width: 100%;
+	height: 50%;
+	overflow: hidden;
+	backface-visibility: hidden;
+	-webkit-backface-visibility: hidden;
+}
+
+.cd-upper {
+	top: 0;
+	background: var(--cd-face);
+}
+
+/* 下半比上半暗一档，中间那道交界就是牌缝 —— 机械翻牌的味道在这一条 */
+.cd-lower {
+	bottom: 0;
+	background: var(--cd-face-2);
+	border-top: 1px solid rgba(255, 255, 255, .07);
+}
+
+/* 数字本体整张牌高，靠 top 偏移露出上/下半截。
+   类名特意带 digit：.cd-num 已经给了 day 模式那句话里的天数，别撞。 */
+.cd-digit-num {
+	position: absolute;
+	left: 0;
+	width: 100%;
+	height: var(--cd-h);
+	line-height: var(--cd-h);
+	text-align: center;
+	font-size: calc(var(--cd-h) * 0.66);
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	font-variant-numeric: tabular-nums;
+	color: var(--cd-ink);
+	user-select: none;
+}
+
+.cd-upper .cd-digit-num {
+	top: 0;
+}
+
+.cd-lower .cd-digit-num {
+	top: calc(var(--cd-h) * -0.5);
+}
+
+/* ---------- 翻转层（结构与节奏同设计稿） ---------- */
+.cd-flip-upper,
+.cd-flip-lower {
+	z-index: 3;
+}
+
+.cd-flip-upper {
+	transform-origin: 50% 100%;
+	transform: rotateX(0deg);
+}
+
+.cd-flip-lower {
+	transform-origin: 50% 0%;
+	transform: rotateX(90deg);
+}
+
+.cd-flip-upper.go {
+	animation: cd-flip-upper .22s cubic-bezier(.55, .05, .95, .5) forwards;
+}
+
+.cd-flip-lower.go {
+	animation: cd-flip-lower .26s .22s cubic-bezier(.05, .5, .45, .95) forwards;
+}
+
+@keyframes cd-flip-upper {
+	from { transform: rotateX(0deg); }
+	to { transform: rotateX(-90deg); }
+}
+
+@keyframes cd-flip-lower {
+	from { transform: rotateX(90deg); }
+	to { transform: rotateX(0deg); }
+}
+
+/* ---------- 冒号：主色圆点，对齐牌面的中线 ---------- */
+.cd-colon {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 18px;
+	height: var(--cd-h);
+	padding: 0 2px;
+}
+
+.cd-colon i {
+	display: block;
+	width: 6px;
+	height: 6px;
+	background: var(--c-primary);
+	animation: cd-blink 2s steps(1, end) infinite;
+}
+
+@keyframes cd-blink {
+	0%, 49.99% { opacity: 1; }
+	50%, 100% { opacity: .25; }
+}
+
+/* 已经过去：数字压淡，跟「还有…」区分开 */
+.countdown.is-past .cd-num,
+.countdown.is-past .cd-digit-num {
+	color: var(--cd-ink-dim);
+}
+
+.countdown.is-past .cd-num,
+.countdown.is-past .cd-days b {
+	color: var(--c-faint);
+}
+
+/* ---------- 小屏 ---------- */
+@media screen and (max-width: 620px) {
+	.countdown {
+		--cd-w: 36px;
+		--cd-h: 52px;
+		--cd-gap: 3px;
+		padding: 16px 14px 14px;
+	}
+
+	.cd-num {
+		font-size: 36px;
+	}
+
+	.cd-clock {
+		gap: 9px;
+	}
+
+	.cd-days {
+		padding: 3px 10px;
+	}
+
+	.cd-days b {
+		font-size: 20px;
+	}
+
+	.cd-colon {
+		gap: 12px;
+	}
+
+	.countdown.is-today .cd-sentence {
+		font-size: 22px;
+	}
+}
+
+/* 系统开了「减弱动态效果」：不翻牌、冒号不闪，数字直接换 */
+@media (prefers-reduced-motion: reduce) {
+	.cd-flip-upper,
+	.cd-flip-lower,
+	.cd-colon i {
+		animation: none !important;
+	}
+}

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<%
+	/* 把配置里的初始偏好直接写进 <html>，首屏就不用等 JS 再补 class。
+	   访客浏览器里存过偏好时，下面那段内联脚本会覆盖这里。 */
+	var htmlClass = ((theme.appearance && theme.appearance.compact) ? 'is-compact ' : '') +
+		((theme.appearance && theme.appearance.effects === false) ? 'no-effects ' : '') +
+		((theme.appearance && theme.appearance.sidebar_collapsed) ? 'dash-collapsed' : '');
+%>
+<html lang="<%= config.language || 'zh-CN' %>" data-theme="<%= (theme.appearance && theme.appearance.scheme === 'light') ? 'light' : 'dark' %>"<%- htmlClass.trim() ? ' class="' + htmlClass.trim() + '"' : '' %>
+	style="--accent:<%= (theme.accent && theme.accent.default) || '#0078d4' %>;--acrylic-blur:<%= ((theme.appearance && theme.appearance.acrylic) !== undefined) ? theme.appearance.acrylic : 24 %>px;">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+	<meta name="theme-color" content="#06101f">
+
+	<%#
+		主题偏好必须在样式表之前同步执行：晚一步浏览器就会先用默认暗色画一帧，
+		再跳到访客上次选的浅色。这里只读 localStorage，不写任何业务逻辑。
+	%>
+	<script>
+		(function () {
+			try {
+				var r = document.documentElement;
+				/* 只有 Windows 自带 Segoe MDL2 Assets；其它平台回落 Font Awesome */
+				if (/Windows/i.test(navigator.userAgent)) r.classList.add('has-mdl2');
+				var t = localStorage.getItem('restart-fluent:theme');
+				/* 主题配置初始明暗：dark | light | auto（跟随系统） */
+				var cfgScheme = '<%= (theme.appearance && theme.appearance.scheme) || "dark" %>';
+				function sysLight() {
+					return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches);
+				}
+				if (t === 'light' || t === 'dark') r.setAttribute('data-theme', t);
+				else if (t === 'auto' || (!t && cfgScheme === 'auto')) {
+					r.setAttribute('data-theme', sysLight() ? 'light' : 'dark');
+				}
+
+				/* 跟随系统时，系统明暗切换要实时生效（访客手动选过就听访客的） */
+				if (window.matchMedia) {
+					var mq = window.matchMedia('(prefers-color-scheme: light)');
+					var onSysTheme = function () {
+						var cur = localStorage.getItem('restart-fluent:theme');
+						if (cur === 'auto' || (!cur && cfgScheme === 'auto')) {
+							r.setAttribute('data-theme', mq.matches ? 'light' : 'dark');
+						}
+					};
+					if (mq.addEventListener) mq.addEventListener('change', onSysTheme);
+					else if (mq.addListener) mq.addListener(onSysTheme);
+				}
+
+				var a = localStorage.getItem('restart-fluent:accent');
+				if (/^#[0-9a-f]{6}$/i.test(a || '')) r.style.setProperty('--accent', a);
+
+				var c = localStorage.getItem('restart-fluent:compact');
+				if (c === '1' || c === '0') r.classList.toggle('is-compact', c === '1');
+
+				var e = localStorage.getItem('restart-fluent:effects');
+				if (e === '1' || e === '0') r.classList.toggle('no-effects', e === '0');
+
+				var s = localStorage.getItem('restart-fluent:sidebar');
+				if (s === '1' || s === '0') r.classList.toggle('dash-collapsed', s === '1');
+			} catch (e) { /* 隐私模式可能禁用 localStorage，忽略即可 */ }
+		})();
+	</script>
+
+	<%
+		/* ---------- SEO：标题 / 描述 / 规范地址 ---------- */
+		var seoTitle;
+		if (is_post() || is_page()) { seoTitle = page.title + ' | ' + theme.title; }
+		else if (is_category()) { seoTitle = '分类：' + page.category + ' | ' + theme.title; }
+		else if (is_tag()) { seoTitle = '标签：' + page.tag + ' | ' + theme.title; }
+		else if (is_archive() && !page.year && !page.month) { seoTitle = '归档 | ' + theme.title; }
+		else {
+			var tagline = config.subtitle || theme.subtitle || '';
+			seoTitle = tagline ? theme.title + ' - ' + tagline : theme.title;
+		}
+
+		var seoDesc = page.description || config.description || theme.description || theme.subtitle || theme.title;
+		var seoUrl = full_url_for(page.path).replace(/index\.html$/, '');
+		var seoAuthor = theme.author || config.author || '';
+		var seoImageConf = (theme.seo && theme.seo.image) || theme.avatar || 'images/head.jpg';
+		var seoImage = seoImageConf ? full_url_for(seoImageConf) : '';
+		var seoTags = [];
+		if (is_post() && page.tags) { page.tags.forEach(function (t) { seoTags.push(t.name); }); }
+
+		/* ---------- 订阅入口：<head> 自动发现 + 顶栏按钮共用 ---------- */
+		var rssCfg = theme.rss || {};
+		var rssOn = rssCfg.enable !== false;
+		var feedCfg = config.feed || {};
+		var feedPath = rssCfg.path || (typeof feedCfg.path === 'string' ? feedCfg.path
+			: (feedCfg.path && (feedCfg.path.atom || feedCfg.path.rss2)) || 'atom.xml');
+		var feedType = (feedCfg.type === 'rss2' || /rss2?\.xml$/i.test(feedPath))
+			? 'application/rss+xml' : 'application/atom+xml';
+		var rssTitle = rssCfg.title || 'RSS 订阅';
+
+		/* ---------- 代码高亮：跟随站点配置 ---------- */
+		var hlPref = theme.highlight || 'auto';
+		var hlMode = (hlPref === 'auto')
+			? ((config.syntax_highlighter === 'prismjs') ? 'prism' : 'hexo')
+			: hlPref;
+		var hlPrism = (hlMode === 'prism');
+		var hlBrowser = hlPrism && !!(config.prismjs && config.prismjs.preprocess === false);
+		var hlLineNo = hlPrism && !!(config.prismjs && config.prismjs.line_number !== false);
+
+		/* ---------- 阶段四功能开关 ---------- */
+		var musicCfg = theme.music || {};
+		var muSongs = musicCfg.songs || [];
+		var muHoliday = (theme.calendar && theme.calendar.holiday_songs) || {};
+		var muOn = !!(musicCfg.enable && (muSongs.length || Object.keys(muHoliday).length));
+
+		var memosCfg = theme.memos || {};
+		var cmCfg = theme.comments || {};
+		var memosOn = memosCfg.enable !== false && cmCfg.enable !== false && !!cmCfg.env_id;
+
+		var calCfg = theme.calendar || {};
+		var calOn = calCfg.enable !== false && (calCfg.widget !== false || calCfg.prompt !== false);
+
+		var wpCfg = theme.wallpaper || {};
+		var wpOn = wpCfg.enable !== false && !!wpCfg.image;
+		var wpImage = wpCfg.image || '/images/wallpaper.jpg';
+		var wpOpacity = (wpCfg.opacity === undefined || wpCfg.opacity === null) ? 1 : wpCfg.opacity;
+		var wpDim = (wpCfg.dim === undefined || wpCfg.dim === null) ? 0.42 : wpCfg.dim;
+
+		/* ---------- 页面标题（Win10 式小字面包屑） ---------- */
+		var crumbParent = '';
+		var crumbCurrent = '全部文章';
+		var pageCount = site.posts.length + ' 篇';
+
+		if (is_post()) {
+			crumbParent = '文章';
+			crumbCurrent = page.title;
+			pageCount = '';
+		} else if (is_page()) {
+			/* 独立功能页直接用页面名做标题，不再套一层“页面 /”。 */
+			var standalone = ['categories', 'tags', 'search', 'links', 'about', 'shuoshuo'];
+			crumbParent = standalone.indexOf(page.layout) > -1 ? '' : '页面';
+			crumbCurrent = page.title;
+			pageCount = '';
+		} else if (is_category()) {
+			crumbParent = '分类';
+			crumbCurrent = page.category;
+			pageCount = page.posts.length + ' 篇';
+		} else if (is_tag()) {
+			crumbParent = '标签';
+			crumbCurrent = page.tag;
+			pageCount = page.posts.length + ' 篇';
+		} else if (is_archive()) {
+			pageCount = (page.posts ? page.posts.length : site.posts.length) + ' 篇';
+			if (page.year && page.month) {
+				crumbParent = '归档';
+				crumbCurrent = page.year + ' 年 ' + page.month + ' 月';
+			} else if (page.year) {
+				crumbParent = '归档';
+				crumbCurrent = page.year + ' 年';
+			} else {
+				crumbCurrent = '归档';
+			}
+		}
+
+		/* UWP 标题栏文字：首页显示站点名，其余页面显示当前页标题 */
+		var topTitle = is_home() ? theme.title : (crumbCurrent || theme.title);
+	%>
+
+	<title><%= seoTitle %></title>
+	<meta name="description" content="<%= seoDesc %>">
+	<meta http-equiv="content-language" content="<%= config.language || 'zh-CN' %>">
+	<% if (theme.keywords) { %>
+	<meta name="keywords" content="<%= theme.keywords %>">
+	<% } %>
+	<meta name="author" content="<%= seoAuthor %>">
+	<link rel="canonical" href="<%= seoUrl %>">
+	<link rel="icon" href="<%- url_for(theme.favicon || 'images/favicon.ico') %>" sizes="any">
+	<% if (rssOn) { %>
+	<link rel="alternate" type="<%= feedType %>" title="<%= theme.title %>" href="<%= full_url_for(feedPath) %>">
+	<% } %>
+	<% if (page.prev_link) { %>
+	<link rel="prev" href="<%= full_url_for(page.prev_link) %>">
+	<% } %>
+	<% if (page.next_link) { %>
+	<link rel="next" href="<%= full_url_for(page.next_link) %>">
+	<% } %>
+
+	<meta property="og:type" content="<%= is_post() ? 'article' : 'website' %>">
+	<meta property="og:title" content="<%= seoTitle %>">
+	<meta property="og:description" content="<%= seoDesc %>">
+	<meta property="og:url" content="<%= seoUrl %>">
+	<meta property="og:site_name" content="<%= theme.title %>">
+	<meta property="og:locale" content="zh_CN">
+	<% if (seoImage) { %>
+	<meta property="og:image" content="<%= seoImage %>">
+	<% } %>
+	<% if (is_post()) { %>
+	<meta property="article:published_time" content="<%= page.date.toISOString() %>">
+		<% if (page.updated) { %>
+	<meta property="article:modified_time" content="<%= page.updated.toISOString() %>">
+		<% } %>
+		<% seoTags.forEach(function (name) { %>
+	<meta property="article:tag" content="<%= name %>">
+		<% }) %>
+	<% } %>
+
+	<meta name="twitter:card" content="<%= seoImage ? 'summary_large_image' : 'summary' %>">
+	<meta name="twitter:title" content="<%= seoTitle %>">
+	<meta name="twitter:description" content="<%= seoDesc %>">
+	<% if (seoImage) { %>
+	<meta name="twitter:image" content="<%= seoImage %>">
+	<% } %>
+
+	<%
+		var ld = is_post() ? {
+			'@context': 'https://schema.org',
+			'@type': 'BlogPosting',
+			headline: page.title,
+			description: seoDesc,
+			url: seoUrl,
+			mainEntityOfPage: seoUrl,
+			datePublished: page.date.toISOString(),
+			dateModified: (page.updated || page.date).toISOString(),
+			author: { '@type': 'Person', name: seoAuthor },
+			publisher: { '@type': 'Person', name: seoAuthor },
+			keywords: seoTags.join(',')
+		} : {
+			'@context': 'https://schema.org',
+			'@type': 'WebSite',
+			name: theme.title,
+			description: seoDesc,
+			url: full_url_for('/index.html').replace(/index\.html$/, ''),
+			author: { '@type': 'Person', name: seoAuthor }
+		};
+		if (seoImage) { ld.image = seoImage; }
+	%>
+	<script type="application/ld+json"><%- JSON.stringify(ld).replace(/</g, '\\u003c') %></script>
+
+	<%- css('lib/font-awesome/css/font-awesome.min.css') %>
+	<% if (hlPrism) { %>
+	<%- css('lib/highlight/prism/prism.css') %>
+		<% if (hlLineNo) { %>
+	<%- css('lib/highlight/prism/prism-line-numbers.css') %>
+		<% } %>
+	<% } %>
+	<%- css('css/fluent.css') %>
+	<%- css('css/feed.css') %>
+	<%- css('css/content.css') %>
+	<%- css('css/pages.css') %>
+	<%- css('css/code.css') %>
+	<%- css('css/post.css') %>
+	<%- css('css/extras.css') %>
+	<% if (theme.comments && theme.comments.enable !== false && theme.comments.env_id) { %>
+	<%- css('css/comments.css') %>
+	<% } %>
+	<% if (muOn) { %>
+	<%- css('css/player.css') %>
+	<% } %>
+	<% if (memosOn) { %>
+	<%- css('css/memos.css') %>
+	<% } %>
+	<% if (calOn) { %>
+	<%- css('css/calendar.css') %>
+	<% } %>
+	<%- css('css/countdown.css') %>
+	<%- css('css/icons.css') %>
+	<%- css('css/animations.css') %>
+</head>
+
+<body>
+	<a class="skip-link" href="#content">跳到正文</a>
+
+	<div class="wallpaper<%= wpOn ? ' is-on' : '' %>" aria-hidden="true"
+		style="<% if (wpOn) { %>--wallpaper-image:url('<%- url_for(wpImage) %>');--wallpaper-opacity:<%= wpOpacity %>;--wallpaper-dim:<%= wpDim %>;<% } else { %>display:none;<% } %>">
+		<span class="wallpaper-glow"></span>
+		<span class="wallpaper-noise"></span>
+	</div>
+	<div class="app" id="app">
+		<%# UWP 风格标题栏：最左返回键（强调色）+ 页面标题，最右侧栏按钮（仅移动端）。 %>
+		<header class="topnav">
+			<button class="dash-back topnav-back" id="dash-back" type="button"
+				aria-label="返回上一页" title="返回上一页"
+				data-home="<%- url_for('/') %>">
+				<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+					<path d="M13.5 8H3.2M7.2 3.9 3.1 8l4.1 4.1" fill="none" stroke="currentColor"
+						stroke-width="1.5" stroke-linecap="square" stroke-linejoin="miter"/>
+				</svg>
+			</button>
+
+			<span class="topnav-title"><%= topTitle %></span>
+
+			<button class="topnav-menu" id="drawer-btn" type="button"
+				aria-label="打开侧栏" aria-controls="sidebar" aria-expanded="false" title="侧栏">
+				<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+					<path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11" fill="none" stroke="currentColor"
+						stroke-width="1.5" stroke-linecap="square"/>
+				</svg>
+			</button>
+		</header>
+
+		<%# 遮罩必须放在 .app 的层叠上下文里：
+		    放在外面时它作为根级 fixed 层（z 55）会盖住整个 .app（z 1），
+		    移动端抽屉也因此被它压在下面。放在这里，抽屉的 z 60 才能高于遮罩。 %>
+		<div class="scrim" id="scrim" hidden></div>
+
+		<%- include('_partial/sidebar') %>
+
+		<main class="feed">
+			<div id="content" class="feed-main" tabindex="-1">
+			<%- body %>
+			</div>
+
+			<%- include('_partial/footer') %>
+		</main>
+	</div>
+
+	<%# 播放器在 #content 之外：pjax 换页只换内容，音频节点与解码状态留在原地。 %>
+	<%- include('_partial/player') %>
+
+	<button class="to-top" id="to-top" type="button" aria-label="回到顶部" title="回到顶部">
+		<i class="fa fa-arrow-up" aria-hidden="true"></i>
+	</button>
+
+	<%- js('js/fluent.js') %>
+	<% if (hlBrowser) { %>
+	<%- js('lib/highlight/prism/prism.js') %>
+	<% } %>
+	<%# 正文增强：图片注释、公式、流程图、GitHub 卡片、代码工具条、分享二维码。
+	    放在 #content 之外只加载一次；换页后自己监听 restart:page 重新初始化。 %>
+	<%- js('js/extras.js') %>
+
+	<% if (muOn) { %>
+	<%- js('js/player.js') %>
+	<% } %>
+	<%- js('js/music-card.js') %>
+	<% if (muOn && musicCfg.keep_playing !== false) { %>
+	<%- js('js/pjax.js') %>
+	<% } %>
+	<% if (memosOn) { %>
+	<%- js('js/memos.js') %>
+	<% } %>
+	<%- js('js/countdown.js') %>
+</body>
+
+</html>

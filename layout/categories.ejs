@@ -1,0 +1,31 @@
+<%
+	var catArr = [];
+	site.categories.forEach(function (c) { catArr.push(c); });
+	catArr.sort(function (a, b) { return b.length - a.length; });
+%>
+<div class="page-shell">
+	<% if (page.content && page.content.trim()) { %>
+		<div class="rich page-body"><%- page.content %></div>
+	<% } %>
+
+	<p class="term-summary">共 <%= catArr.length %> 个分类。</p>
+
+	<% if (!catArr.length) { %>
+		<div class="empty-state">
+			<i class="fa fa-folder-open-o" aria-hidden="true"></i>
+			<p>还没有建立分类。</p>
+		</div>
+	<% } else { %>
+		<div class="term-grid">
+			<% catArr.forEach(function (c) { %>
+				<a class="term-card" href="<%- url_for(c.path) %>">
+					<span class="term-icon"><i class="fa fa-folder-o" aria-hidden="true"></i></span>
+					<span class="term-body">
+						<span class="term-name"><%= c.name %></span>
+						<span class="term-count"><%= c.length %> 篇文章</span>
+					</span>
+				</a>
+			<% }) %>
+		</div>
+	<% } %>
+</div>

@@ -1,0 +1,66 @@
+<%
+	/* 首页右侧的 side-card 堆栈。
+	   当前包含「站点概览」与「关于作者」两块；后续的日历、最近说说
+	   按同样的 <section class="side-card"> 结构追加到 index.ejs 的 aside 里即可。
+	   所有数字与身份信息都来自站点/主题配置，不写死。 */
+	var profile = theme.profile || {};
+	var avatar = theme.avatar || profile.avatar || '';
+	var motto = theme.motto || profile.motto || '';
+	var aboutUrl = url_for('/about');
+
+	var socialItems = [];
+	for (var key in (theme.links || {})) {
+		if (theme.links[key]) socialItems.push({ name: key, url: theme.links[key] });
+	}
+	if (profile.email) socialItems.push({ name: 'mail', url: 'mailto:' + profile.email });
+%>
+<section class="side-card" aria-labelledby="side-overview-title">
+	<h2 class="side-card-title" id="side-overview-title">站点概览</h2>
+	<div class="side-stats">
+		<div class="side-stat">
+			<b><%= site.posts.length %></b>
+			<span>文章</span>
+		</div>
+		<div class="side-stat">
+			<b><%= site.categories.length %></b>
+			<span>分类</span>
+		</div>
+		<div class="side-stat">
+			<b><%= site.tags.length %></b>
+			<span>标签</span>
+		</div>
+	</div>
+</section>
+
+<section class="side-card" aria-labelledby="side-author-title">
+	<h2 class="side-card-title" id="side-author-title">关于作者</h2>
+	<div class="side-author">
+		<a class="side-avatar-link" href="<%- aboutUrl %>" aria-label="关于 <%= theme.author %>">
+			<% if (avatar) { %>
+				<img class="side-avatar" src="<%- url_for(avatar) %>" alt="<%= theme.author %>" loading="lazy">
+			<% } else { %>
+				<span class="side-avatar side-avatar-fallback" aria-hidden="true"><%= (theme.author || '?').slice(0, 1) %></span>
+			<% } %>
+		</a>
+		<div class="side-author-info">
+			<a class="side-author-name" href="<%- aboutUrl %>"><%= theme.author %></a>
+			<% if (motto) { %>
+				<p class="side-motto"><%= motto %></p>
+			<% } %>
+		</div>
+	</div>
+
+	<% if (socialItems.length) { %>
+		<ul class="side-social">
+			<% socialItems.forEach(function (s) {
+				var external = !/^mailto:/i.test(s.url);
+			%>
+				<li>
+					<a href="<%- s.url %>" title="<%= s.name %>"<%= external ? ' target="_blank" rel="noopener noreferrer"' : '' %>>
+						<%- include('social-icon', { name: s.name }) %><span class="sr-only"><%= s.name %></span>
+					</a>
+				</li>
+			<% }) %>
+		</ul>
+	<% } %>
+</section>

@@ -1,0 +1,27 @@
+<%#
+	文章底部评论区（Twikoo）。
+
+	这里只输出容器与配置；twikoo.min.js 由 js/comments.js 在滚到评论区附近时
+	再注入，并且会复用已经加载过的那个全局脚本，不让它随 pjax 换页重复拉取。
+
+	容器 id 用 tcomment（与 Twikoo 官方示例一致）。
+	千万不要用 twikoo 当 id：浏览器会给每个带 id 的元素建一个同名全局变量，
+	window.twikoo 就变成了这个 <div>，和 Twikoo 自己的全局对象撞名，
+	加载后会报 "window.twikoo.init is not a function"。
+
+	注意 include 是独立作用域，读不到 post.ejs 里的变量，所以这里自己取配置。
+%>
+<%
+	var cm = theme.comments || {};
+	var tkVersion = cm.version || '2.0.12';
+	var tkSrc = (cm.src || 'https://cdn.jsdelivr.net/npm/twikoo@{version}/dist/twikoo.min.js')
+		.replace(/\{version\}/g, tkVersion);
+%>
+<section class="post-comments">
+	<%# 标题由 Twikoo 自己渲染（带上评论数、排序、折叠），这里不再另起一个 %>
+	<div class="twikoo" id="tcomment"
+		data-src="<%= tkSrc %>"
+		data-env-id="<%= cm.env_id %>"
+		data-lang="<%= cm.lang || 'zh-CN' %>"
+		data-path="<%= cm.path || '' %>"></div>
+</section>

@@ -1,0 +1,285 @@
+/* ==========================================================================
+   restart-fluent · post.css
+   阅读进度、文章目录（桌面侧栏 + 移动抽屉）。
+   正文增强、分享、代码块样式在 extras.css / code.css。
+   ========================================================================== */
+
+/* ---------- 阅读进度 ---------- */
+.read-progress {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 3px;
+	z-index: 1200;
+	pointer-events: none;
+	background: transparent;
+}
+
+.read-progress i {
+	display: block;
+	width: 0;
+	height: 100%;
+	background: var(--accent);
+	transition: width .08s linear;
+}
+
+/* ---------- 阅读页布局 ---------- */
+.post-wrap {
+	display: flex;
+	align-items: flex-start;
+	gap: 26px;
+}
+
+.post-main {
+	flex: 1;
+	min-width: 0;
+}
+
+.post-side {
+	width: 230px;
+	flex: none;
+	position: sticky;
+	/* 顶部有 UWP 标题栏（--topnav-h），吸顶时让开它 */
+	top: calc(var(--topnav-h) + 12px);
+	display: flex;
+	flex-direction: column;
+	max-height: calc(100vh - var(--topnav-h) - 24px);
+}
+
+/* ---------- 文章目录（Win10 Fluent 侧栏磁贴） ----------
+   亚克力模糊由 fluent.css 的 blur 名单提供；入场动画在 animations.css；
+   Reveal 径向光效与边缘光由 fluent.js cardTargets 绑定。
+   视觉对齐 Win10 设置侧栏：左侧滑动主色指示条 + 圆角磁贴悬停 + 层级树线。 */
+.toc-box {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	max-height: 100%;
+	overflow: hidden;
+	background: var(--tile-tint);
+	border: 1px solid var(--stroke);
+	transition: border-color .15s var(--ease);
+}
+
+.toc-box:hover {
+	border-color: var(--stroke-strong);
+}
+
+.toc-box .box-title {
+	flex: none;
+	margin: 0;
+	padding: 14px 16px 12px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: .08em;
+	color: var(--text-dim);
+	background: transparent;
+	border-bottom: 1px solid var(--stroke);
+	border-left: 3px solid var(--accent);
+}
+
+.toc-content {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	overscroll-behavior: contain;
+	padding: 10px 12px 14px;
+	font-size: 12.5px;
+	scrollbar-width: thin;
+	scrollbar-color: var(--scrollbar) transparent;
+}
+
+.toc-content::-webkit-scrollbar { width: 8px; }
+.toc-content::-webkit-scrollbar-track { background: transparent; }
+
+.toc-content::-webkit-scrollbar-thumb {
+	background: var(--scrollbar);
+	border: 2px solid transparent;
+	background-clip: content-box;
+}
+
+.toc-content ul,
+.toc-content ol {
+	list-style: none;
+	margin: 0;
+	padding-left: 0;
+	border-left: 0;
+}
+
+/* 嵌套层级：细树线 + 缩进（h3 及更深） */
+.toc-content li ul,
+.toc-content li ol {
+	padding-left: 14px;
+	margin-left: 8px;
+	border-left: 1px solid var(--stroke);
+}
+
+.toc-content li {
+	margin: 1px 0;
+	line-height: 1.5;
+}
+
+/* 链接 = Fluent 导航行：直角磁贴 + 左侧滑动指示条 */
+.toc-content a {
+	display: block;
+	position: relative;
+	padding: 7px 10px 7px 12px;
+	color: var(--text-mute);
+	transition: color .15s var(--ease), background .15s var(--ease);
+}
+
+.toc-content a::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 3px;
+	height: 0;
+	background: var(--accent);
+	transition: height .18s var(--ease);
+}
+
+.toc-content a:hover {
+	color: var(--text);
+	background: var(--surface);
+}
+
+.toc-content a.active {
+	color: var(--accent-text);
+	background: var(--accent-soft);
+	font-weight: 600;
+}
+
+.toc-content a.active::before {
+	height: 18px;
+}
+
+/* 二级及更深：字号略收、缩进由 li ul 负责 */
+.toc-content li li a {
+	font-size: 12px;
+	padding-left: 14px;
+}
+
+/* ---------- 移动端目录按钮 ---------- */
+.toc-toggle {
+	display: none;
+	position: fixed;
+	left: 20px;
+	bottom: 24px;
+	z-index: 950;
+	width: 44px;
+	height: 44px;
+	padding: 0;
+	place-items: center;
+	font-size: 17px;
+	color: var(--text-dim);
+	background: var(--tile-tint);
+	-webkit-backdrop-filter: blur(18px);
+	backdrop-filter: blur(18px);
+	border: 1px solid var(--stroke-strong);
+	cursor: pointer;
+}
+
+.toc-toggle:hover {
+	color: #fff;
+	background: var(--accent);
+	border-color: var(--accent);
+}
+
+/* ---------- 目录抽屉 ---------- */
+.toc-drawer {
+	position: fixed;
+	inset: 0;
+	z-index: 1200;
+	visibility: hidden;
+	pointer-events: none;
+}
+
+.toc-drawer.active {
+	visibility: visible;
+	pointer-events: auto;
+}
+
+.toc-drawer-mask {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, .5);
+	opacity: 0;
+	transition: opacity .2s var(--ease);
+}
+
+.toc-drawer.active .toc-drawer-mask { opacity: 1; }
+
+.toc-drawer-panel {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	display: flex;
+	flex-direction: column;
+	width: min(300px, 84vw);
+	background: var(--panel);
+	-webkit-backdrop-filter: blur(var(--acrylic-blur)) saturate(140%);
+	backdrop-filter: blur(var(--acrylic-blur)) saturate(140%);
+	border-right: 1px solid var(--stroke);
+	transform: translateX(-100%);
+	transition: transform .24s var(--ease);
+}
+
+.toc-drawer.active .toc-drawer-panel { transform: translateX(0); }
+
+.toc-drawer-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex: none;
+	padding: 12px 14px;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text);
+	border-bottom: 1px solid var(--stroke);
+}
+
+#toc-drawer-close {
+	display: grid;
+	place-items: center;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	font-size: 20px;
+	line-height: 1;
+	color: var(--text-mute);
+	background: transparent;
+	border: 1px solid transparent;
+	cursor: pointer;
+}
+
+#toc-drawer-close:hover {
+	color: var(--text);
+	background: var(--surface-hover);
+	border-color: var(--stroke);
+}
+
+.toc-drawer-panel .toc-content {
+	flex: 1;
+	min-height: 0;
+	padding: 10px 16px;
+	font-size: 14px;
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 1380px) {
+	.post-side { display: none; }
+	.toc-toggle { display: grid; }
+}
+
+@media (max-width: 640px) {
+	.toc-toggle {
+		left: 12px;
+		bottom: 16px;
+		width: 40px;
+		height: 40px;
+	}
+}

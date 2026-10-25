@@ -1,0 +1,19 @@
+<%#
+	首页的「最近说说」。
+	数据来自 Twikoo 里 /shuoshuo/ 这个路径的评论，由 js/memos.js 拉取填入；
+	拉不到时整块隐藏，不在首页留一个空盒子。
+%>
+<%
+	var cm = theme.comments || {};
+	var mm = theme.memos || {};
+	var memosHomeOn = mm.enable !== false && mm.home !== false &&
+		cm.enable !== false && !!cm.env_id;
+%>
+<% if (memosHomeOn) { %>
+	<section class="side-card memos-recent" data-count="<%= mm.recent_count || 3 %>">
+		<h2 class="side-card-title"><%= mm.title || '说说' %></h2>
+		<ul class="memos-list"></ul>
+		<p class="memos-empty" hidden>还没有说说</p>
+		<a class="memos-more-link" href="<%- url_for(mm.path || mm.page || 'shuoshuo/') %>">查看全部</a>
+	</section>
+<% } %>
