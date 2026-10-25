@@ -106,8 +106,9 @@ comments:
   enable: true
   env_id: ''               # Twikoo 云函数地址；留空整块不渲染
   version: '2.0.12'
-  # npmmirror 同名包（国内可达；jsdelivr 国内实测 31.8s/2.7KB/s）
-  src: 'https://registry.npmmirror.com/twikoo/{version}/files/dist/twikoo.min.js'
+  # twikoo SDK名
+  # 可使用 npmmirror（国内镜像）或jsdelivr
+  src: 'https://<地址>/twikoo/{version}/files/dist/twikoo.min.js'
   lang: zh-CN
   path: ''                 # 区分评论的路径，留空用 location.pathname
 
