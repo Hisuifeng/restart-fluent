@@ -14,6 +14,6 @@
 		<h2 class="side-card-title"><%= mm.title || '说说' %></h2>
 		<ul class="memos-list"></ul>
 		<p class="memos-empty" hidden>还没有说说</p>
-		<a class="memos-more-link" href="<%- url_for(mm.path || mm.page || 'shuoshuo/') %>">查看全部</a>
+		<a class="memos-more-link" href="<%- url_for(mm.page || 'shuoshuo/') %>">查看全部</a>
 	</section>
 <% } %>

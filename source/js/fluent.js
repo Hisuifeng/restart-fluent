@@ -397,7 +397,8 @@
 			'.post-card, .featured, .ghcard, .hero-nav, .hero-dot, ' +
 			'.tk-button:not(.tk-button--text), .tk-expand, ' +
 			'.tk-action-link, .tk-sort-item, .tk-comments-title .tk-icon.__comments, ' +
-			'.tk-pagination-pager, .tk-submit-action-icon'
+			'.tk-pagination-pager, .tk-submit-action-icon:not(.OwO), ' +
+			'.tk-submit-action-icon.OwO > .OwO-logo'
 		);
 	}
 
@@ -414,7 +415,8 @@
 			'.search-panel, .notfound, .empty-state, .toc-box, .share-poster, ' +
 			'.music-card, .countdown, .ghcard, .term-card, ' +
 			'.friend-card, .cal-card, .player, .home-hero, .hero-post, ' +
-			'.archive-stats, .tk-comments-container > .tk-comment'
+			'.archive-stats, .tk-comments-container > .tk-comment, ' +
+			'.OwO-body'
 		);
 	}
 
@@ -426,6 +428,8 @@
 
 	function bindPress() {
 		Array.prototype.forEach.call(pressTargets(), function (el) {
+			var owo = el.parentElement;
+			if (owo && owo.classList.contains('OwO')) owo.classList.add('fluent-owo');
 			if (el.dataset.pressBound) return;
 			el.dataset.pressBound = '1';
 			/* 所有可点击控件都拿到 Reveal 内部高光与边缘光；

@@ -1,0 +1,15 @@
+# dependencies
+node_modules/
+
+# build output
+public/
+db.json
+.deploy_git/
+
+# editors / OS
+.DS_Store
+Thumbs.db
+*.log
+
+# local sync script
+sync-theme.ps1

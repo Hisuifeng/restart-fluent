@@ -60,7 +60,7 @@
 
 	/* 首页说说里的图片常来自 Twikoo 正文，本身没有 alt，
 	   Bing 站长工具会报「缺少图像的 Alt 属性」。
-	   表情图取文件名（/emotion/emoji/可爱.gif → 可爱），
+	   表情图取文件名（/emotion/arc-hikari/可爱.gif → 可爱），
 	   普通配图退到「说说正文前 30 字」，保证每张图都有可读的 alt。 */
 	function ensureImgAlt(scope) {
 		var fallback = (scope.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 30);

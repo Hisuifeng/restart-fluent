@@ -189,6 +189,14 @@
 	}
 }
 
+/* OwO 自带的暗色选择器（.night / .darkmode / .DarkMode / [data-theme=dark] /
+   [data-user-color-scheme=dark]）会在面板上再刷一层 background-color，
+   而且注入得更晚；用 html 前缀 + !important 把它们统一压回主题令牌。 */
+html .post-comments .OwO .OwO-body {
+	background-color: var(--tile-tint) !important;
+	background-image: none !important;
+}
+
 /* ---------- 表情面板的窄屏宽度 ----------
    Twikoo 自带样式里有四条 #twikoo 前缀的规则控制每行放几个表情，
    它们要求容器 id 就是 twikoo；而容器一旦叫 twikoo，浏览器就会给
@@ -279,6 +287,7 @@
 /* 排序：分段控件（同站内 .view-seg：选中段满色主色） */
 .post-comments .tk-comments .tk-comments-sort {
 	display: inline-flex;
+	gap: 0;
 	border: 1px solid var(--stroke);
 	background: var(--tile-tint);
 	-webkit-backdrop-filter: blur(14px) saturate(140%);
@@ -445,6 +454,37 @@
 
 .post-comments .tk-comments .tk-submit-action-icon svg:hover {
 	opacity: 1;
+}
+
+/* OwO 按钮：外层只留布局，视觉与光效交给内层 logo。
+   外层若保留 .reveal 的 position/overflow，会把表情面板裁成 30px 方块。 */
+.post-comments .tk-comments .tk-submit-action-icon.OwO.fluent-owo {
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	position: static;
+	overflow: visible;
+	isolation: auto;
+	color: inherit;
+	background: transparent;
+	border: 0;
+}
+
+.post-comments .tk-comments .tk-submit-action-icon.OwO.fluent-owo > .OwO-logo {
+	width: 100%;
+	height: 100%;
+	padding: 6px;
+	box-sizing: border-box;
+	color: var(--text-dim);
+	background: var(--tile-tint);
+	border: 1px solid var(--stroke-strong);
+	border-radius: inherit;
+	transition: background .12s var(--ease), color .12s var(--ease);
+}
+
+.post-comments .tk-comments .tk-submit-action-icon.OwO.fluent-owo > .OwO-logo:hover {
+	color: var(--text);
+	background: var(--tile-tint-hover);
 }
 
 /* 预览容器 */
@@ -738,6 +778,26 @@
 	color: var(--text);
 	background-color: var(--tile-tint);
 	border: 1px solid var(--stroke-strong);
+	-webkit-backdrop-filter: blur(var(--acrylic-blur)) saturate(140%);
+	backdrop-filter: blur(var(--acrylic-blur)) saturate(140%);
+}
+
+/* 面板本身拿到 Reveal 光效；这里把 .reveal 的 relative / 裁切改回浮层语义，
+   否则 Twikoo 的绝对定位下拉会被压成文档流里的一块。 */
+.post-comments .OwO .OwO-body.reveal {
+	position: absolute;
+	overflow-x: hidden;
+	overflow-y: auto;
+	/* .reveal 的 isolation:isolate 会让面板自己变成「背景根」，
+	   backdrop-filter 就只剩一层底色 → 看起来只有半透明。
+	   这里关掉隔离，让模糊去采样真实页面。 */
+	isolation: auto;
+}
+
+/* 隔离关掉后 ::before 的 z-index:-1 会沉到面板底色下面，
+   抬到 0 让它盖在内容上（只画光，不挡点击）。 */
+.post-comments .OwO .OwO-body.reveal::before {
+	z-index: 0;
 }
 
 .post-comments .OwO .OwO-bar {
@@ -746,6 +806,60 @@
 
 .post-comments .OwO .OwO-item:hover {
 	background: var(--tile-tint-hover);
+}
+
+/* 面板打开时解除评论卡裁切，并把面板所在层提到后续卡片之上。
+   只在开合态生效，关闭后不动卡片原本的视觉与层级。 */
+.post-comments .tk-comments > .tk-submit:has(.OwO-open),
+.post-comments .tk-comments-container > .tk-comment:has(.OwO-open) {
+	position: relative;
+	z-index: 2;
+	overflow: visible;
+}
+
+.post-comments .tk-comment .tk-submit:has(.OwO-open) {
+	overflow: visible;
+}
+
+/* 同 memos.css 记录的那个坑：带 animation / backdrop-filter 的元素会变成
+   「背景根」，后代的 backdrop-filter 根本不渲染 —— 表情面板的亚克力就是这样
+   被上面的发布框/评论卡吃掉的。面板打开期间先把祖先上的这两项摘掉。 */
+.post-comments .tk-comments > .tk-submit:has(.OwO-open),
+.post-comments .tk-comment:has(.OwO-open),
+.post-comments .tk-comment .tk-submit:has(.OwO-open) {
+	animation: none;
+	-webkit-backdrop-filter: none;
+	backdrop-filter: none;
+	/* 评论卡本身带 .reveal（isolation:isolate），同样会形成背景根；
+	   二级评论的回复框嵌在 .tk-comment 里，就是被它吃掉了模糊。 */
+	isolation: auto;
+}
+
+/* 兜底：二级回复的祖先链比一级深，任何一层带 filter / backing 属性的元素
+   都会成为背景根。面板打开期间，把整条链上的这些都清掉。 */
+.post-comments :has(.OwO-open) {
+	animation: none !important;
+	-webkit-backdrop-filter: none !important;
+	backdrop-filter: none !important;
+	filter: none !important;
+	isolation: auto !important;
+	transform: none !important;
+	contain: none !important;
+}
+
+/* 兜底：Twikoo 某些版本会把回复框（连同表情面板）挂到 .post-comments 之外，
+   上面的作用域选择器就匹配不到。这里给所有 .OwO 面板同一套亚克力令牌。 */
+.OwO .OwO-body {
+	color: var(--text);
+	background-color: var(--tile-tint);
+	border: 1px solid var(--stroke-strong);
+	-webkit-backdrop-filter: blur(var(--acrylic-blur)) saturate(140%);
+	backdrop-filter: blur(var(--acrylic-blur)) saturate(140%);
+	isolation: auto;
+}
+
+.OwO .OwO-body.reveal {
+	isolation: auto;
 }
 
 /* ---------- 窄屏 ---------- */

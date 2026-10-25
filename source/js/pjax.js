@@ -155,6 +155,39 @@
 		}, 400);
 	}
 
+	/* ---------- 加载圈（demo/loading-demo.txt） ----------
+	   Win10 是一圈追逐的圆点，用 CSS 复刻，不依赖系统字体。
+	   出现时把 #content 藏起来，界面只剩标题栏 + 加载圈。 */
+	var loaderNode = null;
+	var loaderTimer = 0;
+
+	function createLoader() {
+		if (loaderNode) return;
+		loaderNode = document.createElement('div');
+		loaderNode.className = 'win10-loader';
+		loaderNode.setAttribute('aria-hidden', 'true');
+		loaderNode.innerHTML = '<span></span><span></span><span></span><span></span><span></span>';
+		document.body.appendChild(loaderNode);
+	}
+
+	function showLoader() {
+		createLoader();
+		if (loaderTimer) window.clearTimeout(loaderTimer);
+		loaderTimer = window.setTimeout(function () {
+			loaderNode.classList.add('active');
+			var cur = document.querySelector(CONTENT);
+			if (cur) cur.classList.add('is-loading');
+		}, 120);
+	}
+
+	function hideLoader() {
+		if (loaderTimer) window.clearTimeout(loaderTimer);
+		loaderTimer = 0;
+		if (loaderNode) loaderNode.classList.remove('active');
+		var cur = document.querySelector(CONTENT);
+		if (cur) cur.classList.remove('is-loading');
+	}
+
 	function go(url, push, restoreY, dir) {
 		var cur = document.querySelector(CONTENT);
 		if (!cur) {
@@ -162,6 +195,7 @@
 			return;
 		}
 
+		showLoader();
 		fetch(url, { credentials: 'same-origin' })
 			.then(function (res) {
 				if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -176,9 +210,11 @@
 					try {
 						swap(doc, url, dir);
 					} catch (err) {
+						hideLoader();
 						location.href = url;
 						return;
 					}
+					hideLoader();
 					if (push) {
 						history.pushState({ pjax: true, scroll: 0 }, '', url);
 					}
@@ -186,6 +222,7 @@
 				});
 			})
 			.catch(function () {
+				hideLoader();
 				location.href = url;
 			});
 	}

@@ -1281,9 +1281,9 @@ body { background: var(--body-bg); }
 	display: none;
 	background-color: var(--body-bg) !important;
 	background-image: var(--wallpaper-image) !important;
-	background-size: cover;
-	background-position: center;
-	background-repeat: no-repeat;
+	background-size: cover !important;
+	background-position: center center !important;
+	background-repeat: no-repeat !important;
 	opacity: var(--wallpaper-opacity, 1);
 }
 
@@ -1299,6 +1299,9 @@ body { background: var(--body-bg); }
 html[data-theme="light"] .wallpaper {
 	background-color: var(--body-bg) !important;
 	background-image: var(--wallpaper-image) !important;
+	background-size: cover !important;
+	background-position: center center !important;
+	background-repeat: no-repeat !important;
 }
 
 .dash {
@@ -1434,4 +1437,64 @@ html[data-theme="light"] {
 .viewer-close {
 	-webkit-backdrop-filter: blur(14px) saturate(140%);
 	backdrop-filter: blur(14px) saturate(140%);
+}
+
+/* ---------- pjax 加载圈 ----------
+   按 demo/loading-demo.txt：5 个圆点绕环追逐，非匀速缓动模拟 Win10 呼吸感。
+   纯 CSS 绘制，不依赖 Segoe MDL2 字体，移动端同样可见。 */
+.win10-loader {
+	--loader-size: 44px;
+	--dot-size: 5px;
+	--animation-duration: 2.6s;
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, calc(-50% + var(--topnav-h) / 2));
+	width: var(--loader-size);
+	height: var(--loader-size);
+	pointer-events: none;
+	opacity: 0;
+	transition: opacity .15s ease;
+	z-index: 9999;
+}
+
+.win10-loader.active { opacity: 1; }
+
+.win10-loader span {
+	position: absolute;
+	inset: 0;
+	opacity: 0;
+	animation: orbit var(--animation-duration) cubic-bezier(.45, .05, .55, .95) infinite;
+}
+
+.win10-loader span::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 50%;
+	width: var(--dot-size);
+	height: var(--dot-size);
+	margin-left: calc(var(--dot-size) / -2);
+	border-radius: 50%;
+	background-color: var(--accent);
+}
+
+.win10-loader span:nth-child(2) { animation-delay: .1s; }
+.win10-loader span:nth-child(3) { animation-delay: .2s; }
+.win10-loader span:nth-child(4) { animation-delay: .3s; }
+.win10-loader span:nth-child(5) { animation-delay: .4s; }
+
+@keyframes orbit {
+	0% { transform: rotate(0deg); opacity: 0; }
+	6% { opacity: 1; }
+	94% { opacity: 1; }
+	100% { transform: rotate(720deg); opacity: 0; }
+}
+
+/* 加载时内容区留空：界面上只剩标题栏和加载圈。
+   用 opacity 而不是 visibility —— hero 幻灯片里的 .hero-slide 会把
+   visibility 显式设回 visible，继承的 hidden 会被它顶掉。 */
+#content.is-loading {
+	opacity: 0;
+	pointer-events: none;
 }
