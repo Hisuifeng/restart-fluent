@@ -249,7 +249,11 @@
 	<%- css('css/comments.css') %>
 	<% } %>
 	<% if (muOn) { %>
-	<%- css('css/player.css') %>
+	<%# 播放器样式不参与首屏关键路径：先藏起来，样式到位再显示，
+	    不让它的请求/体积拖慢主题本身的渲染。 %>
+	<style>.player{display:none}</style>
+	<link rel="stylesheet" href="<%- url_for('css/player.css') %>" media="print"
+		onload="this.media='all'">
 	<% } %>
 	<% if (memosOn) { %>
 	<%- css('css/memos.css') %>
@@ -325,7 +329,8 @@
 	<%- js('js/extras.js') %>
 
 	<% if (muOn) { %>
-	<%- js('js/player.js') %>
+	<%# 播放器脚本同样延后：defer 不阻塞解析/首绘，等 DOM 就绪再初始化。 %>
+	<script src="<%- url_for('js/player.js') %>" defer></script>
 	<% } %>
 	<%- js('js/music-card.js') %>
 	<% if (muOn && musicCfg.keep_playing !== false) { %>

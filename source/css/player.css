@@ -11,6 +11,7 @@
    ========================================================================== */
 
 .player {
+	display: block;
 	position: fixed;
 	right: 20px;
 	bottom: 80px;

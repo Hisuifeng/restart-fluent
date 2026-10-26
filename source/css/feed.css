@@ -670,8 +670,8 @@ html.is-compact .featured-digest { margin-bottom: 12px; }
 	margin: 0;
 }
 
-/* 第一页背景图：只作用于第一张 slide，不铺到第二页 */
-.hero-slide-cover.has-image {
+/* 带背景图的 slide：任何一页都可以配图，不只是封面 */
+.hero-slide.has-image {
 	position: relative;
 	overflow: hidden;
 	margin: calc(-1 * var(--hero-pad-top)) calc(-1 * var(--hero-pad-x)) calc(-1 * var(--hero-pad-bottom));
@@ -683,7 +683,7 @@ html.is-compact .featured-digest { margin-bottom: 12px; }
 	background-repeat: no-repeat;
 }
 
-.hero-slide-cover.has-image::after {
+.hero-slide.has-image::after {
 	content: "";
 	position: absolute;
 	inset: 0;
@@ -691,14 +691,14 @@ html.is-compact .featured-digest { margin-bottom: 12px; }
 	pointer-events: none;
 }
 
-.hero-slide-cover.has-image .hero-copy {
+.hero-slide.has-image .hero-copy {
 	position: relative;
 	z-index: 1;
 }
 
-.hero-slide-cover.has-image .hero-title { color: #fff; }
-.hero-slide-cover.has-image .hero-month,
-.hero-slide-cover.has-image .hero-slogan { color: rgba(255, 255, 255, .78); }
+.hero-slide.has-image .hero-title { color: #fff; }
+.hero-slide.has-image .hero-month,
+.hero-slide.has-image .hero-slogan { color: rgba(255, 255, 255, .78); }
 
 .hero-slide:nth-child(2) .hero-title { font-size: 27px; }
 

@@ -116,17 +116,51 @@ comments:
 # 信息流条数
 recent_count: 10
 home:
-  feature: true            # 最新一篇进幻灯片「最新发布」页；该文章同时保留在下方列表
   view: grid               # 初始视图：grid | list
-  # 幻灯片：第 1 页封面，第 2 页起每页展示一篇最新文章
+  # ---------- 首页 Hero 幻灯片 ----------
   hero:
     enable: true
-    pages: 2               # 总页数：1 = 只有封面；N = 封面 + 最新 N-1 篇
-    eyebrow: ''            # 封面小标题，留空用 站点名 · 副标题
-    title: ''              # 封面大标题，留空用 description
-    slogan: ''             # 封面口号，留空用 motto
     image: /images/wallpaper.jpg
     dim: 0.25              # 图片上的暗色遮罩，0 不压暗
+    eyebrow: ''  # cover 默认小标题
+    title: ''              # cover 默认大标题
+    slogan: ''      # cover 默认口号
+    # 兼容旧配置：不写 slides 时，pages = 总页数（第 1 页封面，其余页各取一篇最新文章）
+    pages: 2
+    # 幻灯片数组：顺序即页序，page 可显式指定页码（不写则顺延）
+    # type: cover（封面）| latest（最新发布）| category（分类最新）
+    #     | onthisday（往年同月同日的文章，构建时计算）| custom（自定义）
+    slides:
+      # 封面
+      - type: cover
+        page: 1
+      
+      # 最后发布的文章
+      - type: latest
+        page: 2
+        count: 1
+      
+      # 最新发布 合集
+      # - type: category
+      #   page: 3
+      #   category: 
+      #   count: 1
+
+      # 历史上的今天
+      # - type: onthisday
+      #   page: 4
+      #   count: 1
+     
+      # 自定义
+      # - type: custom
+      #   page: 5
+      #   eyebrow: 关于本站
+      #   title: 欢迎来到 Hikari 的博客
+      #   text: 这里记录技术、建站与生活。
+      #   image: /images/wallpaper.jpg
+      #   buttons:
+      #     - { text: 关于我, url: /about }
+      #     - { text: 归档, url: /archives, accent: false }
 
 # 右栏月历与节假日提示（节日主题曲联动上面的 music）
 calendar:

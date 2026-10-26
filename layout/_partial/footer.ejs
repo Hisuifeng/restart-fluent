@@ -10,25 +10,25 @@
 %>
 <footer class="feed-foot">
 	<div class="feed-foot-inner">
-		<p class="foot-copy">
-			&copy; <%= since %>&ndash;<%= date(Date.now(), 'YYYY') %>
-			<span><%= theme.author %></span>
-		</p>
 		<% if (theme.subtitle) { %>
 			<p class="foot-saying">&ldquo;<%= theme.subtitle %>&rdquo;</p>
 		<% } %>
 		<p class="foot-meta">
+			<span class="foot-copy">&copy; <%= since %>&ndash;<%= date(Date.now(), 'YYYY') %>
+				<span><%= theme.author %></span></span>
 			<% if (rssOn) { %>
-				<a href="<%- url_for(feedPath) %>" target="_blank" rel="noopener"><%= rssCfg.title || 'RSS 订阅' %></a>
 				<span class="foot-dot">·</span>
+				<a href="<%- url_for(feedPath) %>" target="_blank" rel="noopener"><%= rssCfg.title || 'RSS 订阅' %></a>
 			<% } %>
 			<% if (fc.icp) { %>
-				<a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"><%= fc.icp %></a>
 				<span class="foot-dot">·</span>
+				<a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer"><%= fc.icp %></a>
 			<% } %>
 			<% if (fc.powered_by !== false) { %>
-				由 <a href="https://hexo.io/" target="_blank" rel="noopener noreferrer">Hexo</a> 驱动
-				<span class="foot-dot">·</span> 主题 <span><%= theme.name || 'restart-fluent' %></span>
+				<span class="foot-dot">·</span>由
+				<a href="https://hexo.io/" target="_blank" rel="noopener noreferrer">Hexo</a> 驱动
+				<span class="foot-dot">·</span>主题
+				<a href="https://github.com/Hisuifeng/restart-fluent" target="_blank" rel="noopener noreferrer"><%= theme.name || 'restart-fluent' %></a>
 			<% } %>
 		</p>
 	</div>

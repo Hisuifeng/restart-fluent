@@ -7,10 +7,6 @@
 	var cap = parseInt(theme.recent_count, 10);
 	if (!(cap > 0)) cap = 10;
 	var visible = allPosts.slice(0, cap);
-	/* feature 只是「读取」最新一篇（peek），不能 shift 移出列表：
-	   幻灯片第 2 页的最新发布必须同时出现在下方「最新文章」里。 */
-	var showFeature = homeCfg.feature !== false && (page.current || 1) === 1 && visible.length > 0;
-	var feature = showFeature ? visible[0] : null;
 	var sideCats = site.categories.sort('-length').limit(8);
 	var view = homeCfg.view === 'list' ? 'list' : 'grid';
 	var hiddenCount = Math.max(0, allPosts.length - cap);
@@ -27,60 +23,163 @@
 	var memosHomeOn = memosCfg.enable !== false && memosCfg.home !== false &&
 		cmCfg.enable !== false && !!cmCfg.env_id;
 
-	/* 首页 hero：第 1 页封面（文案可在 home.hero 配置），第 2 页起为「最新发布」，
-	   每页取一篇最新文章；总页数由 home.hero.pages 决定（1 = 只有封面）。 */
+	/* ---------- 首页 hero ----------
+	   home.hero.slides 是有序数组，每项一页；page 可显式指定页码。
+	   type: cover（封面文案）| latest（最新发布）| category（某分类最新）
+	         | onthisday（往年今天的文章）| custom（自定义文案/图片/按钮） */
 	var heroCfg = homeCfg.hero || {};
 	var heroProfile = theme.profile || {};
-	var heroOn = is_home() && (page.current || 1) === 1 && allPosts.length > 0
-		&& heroCfg.enable !== false;
+	var heroOn = is_home() && (page.current || 1) === 1 && heroCfg.enable !== false;
 	var heroEyebrow = heroCfg.eyebrow || (theme.title + (config.subtitle ? ' · ' + config.subtitle : ''));
 	var heroTitle = heroCfg.title || theme.description || config.description || theme.title;
 	var heroSlogan = heroCfg.slogan || heroProfile.motto || config.description || '';
-	var heroPages = parseInt(heroCfg.pages, 10);
-	if (!(heroPages > 0)) heroPages = 2;
-	var heroPosts = (heroOn && feature) ? allPosts.slice(0, Math.max(0, heroPages - 1)) : [];
-	var heroSlideCount = heroOn ? 1 + heroPosts.length : 0;
-	var heroImage = heroCfg.image || '';
 	var heroDim = (heroCfg.dim === undefined || heroCfg.dim === null) ? 0.52 : heroCfg.dim;
+
+	function heroBtns(list, fallback) {
+		var src = (list && list.length) ? list : (fallback || []);
+		var out = [];
+		src.forEach(function (b) {
+			if (!b) return;
+			if (typeof b === 'string') { out.push({ text: '阅读全文', url: b, accent: true }); return; }
+			out.push({ text: b.text || '查看', url: b.url || '#', accent: b.accent !== false });
+		});
+		return out;
+	}
+
+	function heroPostSlide(p, eyebrow) {
+		var t = p.title || '';
+		if (t.length > 36) t = t.slice(0, 36) + '…';
+		return {
+			eyebrow: eyebrow,
+			title: t,
+			text: fluent_digest(p, 150),
+			buttons: [{ text: '阅读全文', url: url_for(p.path), accent: true }]
+		};
+	}
+
+	var heroSlides = [];
+	var usedPages = {};
+	var pageCursor = 1;
+	function takePage(hint) {
+		var p = parseInt(hint, 10);
+		if (p > 0 && !usedPages[p]) { usedPages[p] = 1; return p; }
+		while (usedPages[pageCursor]) pageCursor++;
+		usedPages[pageCursor] = 1;
+		return pageCursor++;
+	}
+	function addHeroSlide(slide, hint) {
+		slide.page = takePage(hint);
+		heroSlides.push(slide);
+	}
+
+	var heroDefs = heroCfg.slides;
+	if (!heroDefs || !heroDefs.length) {
+		/* 兼容旧配置：pages = 总页数，第 1 页封面，其余页各取一篇最新文章 */
+		var heroPages = parseInt(heroCfg.pages, 10);
+		if (!(heroPages > 0)) heroPages = 2;
+		heroDefs = [{ type: 'cover', page: 1 }];
+		if (heroPages > 1) {
+			heroDefs.push({ type: 'latest', page: 2, count: heroPages - 1 });
+		}
+	}
+
+	heroDefs.forEach(function (def) {
+		def = def || {};
+		var type = def.type || 'cover';
+		var pool = allPosts;
+		var eyebrow = def.eyebrow || '';
+
+		if (def.category) {
+			var catObj = site.categories.findOne({ name: def.category });
+			pool = catObj ? catObj.posts.sort('-date').toArray() : [];
+			if (!eyebrow) eyebrow = (def.label || def.category) + ' · 最新';
+		}
+
+		if (type === 'latest' || type === 'category') {
+			var n = Math.max(1, parseInt(def.count, 10) || 1);
+			var skip = Math.max(0, parseInt(def.skip, 10) || 0);
+			if (!eyebrow) eyebrow = '最新发布';
+			pool.slice(skip, skip + n).forEach(function (p, i) {
+				addHeroSlide(heroPostSlide(p, eyebrow), i === 0 ? def.page : 0);
+			});
+			return;
+		}
+
+		if (type === 'onthisday') {
+			var md = date(Date.now(), 'MM-DD');
+			var thisYear = date(Date.now(), 'YYYY');
+			var hist = allPosts.filter(function (p) {
+				return date(p.date, 'YYYY') !== thisYear && date(p.date, 'MM-DD') === md;
+			});
+			var hn = Math.max(1, parseInt(def.count, 10) || 3);
+			if (!eyebrow) eyebrow = '历史上的今天';
+			hist.slice(0, hn).forEach(function (p, i) {
+				addHeroSlide(heroPostSlide(p, eyebrow), i === 0 ? def.page : 0);
+			});
+			return;
+		}
+
+		if (type === 'custom') {
+			addHeroSlide({
+				eyebrow: eyebrow,
+				title: def.title || heroTitle,
+				text: def.text || def.slogan || '',
+				image: def.image || '',
+				dim: (def.dim === undefined || def.dim === null) ? heroDim : def.dim,
+				buttons: heroBtns(def.buttons)
+			}, def.page);
+			return;
+		}
+
+		/* cover：顶层 home.hero 的文案作为默认值 */
+		addHeroSlide({
+			eyebrow: eyebrow || heroEyebrow,
+			title: def.title || heroTitle,
+			text: (def.text === undefined ? heroSlogan : def.text),
+			image: (def.image === undefined ? (heroCfg.image || '') : def.image),
+			dim: (def.dim === undefined || def.dim === null) ? heroDim : def.dim,
+			buttons: heroBtns(def.buttons, [
+				{ text: '开始阅读', url: '#post-list', accent: true },
+				{ text: '关于我', url: url_for('/about'), accent: false }
+			])
+		}, def.page);
+	});
+
+	heroSlides.sort(function (a, b) { return a.page - b.page; });
+	if (!heroOn) heroSlides = [];
+	var heroSlideCount = heroSlides.length;
 %>
 
 <div class="home-layout<%= showSide ? '' : ' no-side' %>">
 	<div class="home-main">
-		<% if (heroOn) { %>
+		<% if (heroOn && heroSlideCount) { %>
 			<section class="home-hero hero-slider" data-hero-slider
 				aria-roledescription="carousel" aria-label="首页展示">
 				<div class="hero-inner">
 					<div class="hero-slides">
-						<div class="hero-slide hero-slide-cover is-active<%= heroImage ? ' has-image' : '' %>" data-hero-slide aria-hidden="false"
-							<% if (heroImage) { %>style="--hero-image:url('<%- url_for(heroImage) %>');--hero-dim:<%= heroDim %>;"<% } %>>
-							<div class="hero-copy">
-								<p class="hero-month"><%= heroEyebrow %></p>
-								<h1 class="hero-title" id="hero-title"><%= heroTitle %></h1>
-								<% if (heroSlogan) { %>
-									<p class="hero-slogan"><%= heroSlogan %></p>
-								<% } %>
-								<div class="hero-actions">
-									<a class="btn btn-accent" href="#post-list">开始阅读</a>
-									<a class="btn" href="<%- url_for('/about') %>">关于我</a>
-								</div>
-							</div>
-						</div>
-
-						<% heroPosts.forEach(function (p) {
-							var pTitle = p.title || '';
-							if (pTitle.length > 36) pTitle = pTitle.slice(0, 36) + '…';
-							var pDigest = fluent_digest(p, 150);
-						%>
-							<div class="hero-slide" data-hero-slide aria-hidden="true">
+						<% heroSlides.forEach(function (s, si) { %>
+							<div class="hero-slide<%= si === 0 ? ' is-active' : '' %><%= s.image ? ' has-image' : '' %>"
+								data-hero-slide aria-hidden="<%= si === 0 ? 'false' : 'true' %>"
+								<% if (s.image) { %>style="--hero-image:url('<%- url_for(s.image) %>');--hero-dim:<%= s.dim %>;"<% } %>>
 								<div class="hero-copy">
-									<p class="hero-month">最新发布</p>
-									<h2 class="hero-title"><%= pTitle %></h2>
-									<% if (pDigest) { %>
-										<p class="hero-slogan"><%= pDigest %></p>
+									<% if (s.eyebrow) { %>
+										<p class="hero-month"><%= s.eyebrow %></p>
 									<% } %>
-									<div class="hero-actions">
-										<a class="btn btn-accent" href="<%- url_for(p.path) %>">阅读全文</a>
-									</div>
+									<% if (si === 0) { %>
+										<h1 class="hero-title" id="hero-title"><%= s.title %></h1>
+									<% } else { %>
+										<h2 class="hero-title"><%= s.title %></h2>
+									<% } %>
+									<% if (s.text) { %>
+										<p class="hero-slogan"><%= s.text %></p>
+									<% } %>
+									<% if (s.buttons && s.buttons.length) { %>
+										<div class="hero-actions">
+											<% s.buttons.forEach(function (b) { %>
+												<a class="btn<%= b.accent ? ' btn-accent' : '' %>" href="<%- b.url %>"><%= b.text %></a>
+											<% }) %>
+										</div>
+									<% } %>
 								</div>
 							</div>
 						<% }) %>
