@@ -10,7 +10,7 @@
 
 适用于 Hexo 7.x / Node.js 18+。
 
-![restart-fluent 首页截图](docs/images/home.png)
+![restart-fluent 首页截图](docss/images/home.png)
 
 ## 特性
 
@@ -83,7 +83,7 @@ hexo generate
 hexo server
 ```
 
-> 搜索、RSS、字数统计、评论、说说、播放器等功能需要额外插件或配置；页面（搜索 / 关于 / 友链等）也需要手动创建。完整清单见 [开发文档](./doc/DEVELOPMENT.md)。
+> 搜索、RSS、字数统计、评论、说说、播放器等功能需要额外插件或配置；页面（搜索 / 关于 / 友链等）也需要手动创建。完整清单见 [开发文档](./docs/DEVELOPMENT.md)。
 
 ## 部署
 
@@ -109,14 +109,14 @@ hexo deploy
 
 ## 更多文档
 
-主题安装方式、插件对照表、配置项、页面创建、正文标签、常见问题与发布流程见 [doc/DEVELOPMENT.md](./doc/DEVELOPMENT.md)：
+主题安装方式、插件对照表、配置项、页面创建、正文标签、常见问题与发布流程见 [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)：
 
-- [插件与功能对照表](./doc/DEVELOPMENT.md#插件与功能对照表)
-- [站点配置](./doc/DEVELOPMENT.md#站点配置)
-- [主题配置速查](./doc/DEVELOPMENT.md#主题配置速查)
-- [页面与模板](./doc/DEVELOPMENT.md#页面与模板)
-- [正文标签](./doc/DEVELOPMENT.md#正文标签)
-- [常见问题](./doc/DEVELOPMENT.md#常见问题)
+- [插件与功能对照表](./docs/DEVELOPMENT.md#插件与功能对照表)
+- [站点配置](./docs/DEVELOPMENT.md#站点配置)
+- [主题配置速查](./docs/DEVELOPMENT.md#主题配置速查)
+- [页面与模板](./docs/DEVELOPMENT.md#页面与模板)
+- [正文标签](./docs/DEVELOPMENT.md#正文标签)
+- [常见问题](./docs/DEVELOPMENT.md#常见问题)
 
 ## License
 
