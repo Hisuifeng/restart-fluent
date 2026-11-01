@@ -251,7 +251,7 @@ about:
     有朋自远方来，不亦乐乎。
   facts: []
   
-  # 侧栏「维护的项目」：复用文章里的 GitHub 卡片（owner/repo），描述与星标由前端补
+  # 侧栏「维护的项目」：复用文章里的 GitHub 卡片（owner/repo）
   # projects:
   #   title: 维护的项目
   #   repos:
