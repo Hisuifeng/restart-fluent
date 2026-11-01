@@ -684,6 +684,18 @@ mark {
 
 .about-side-block:last-child { border-bottom: 0; }
 
+/* 关于页侧栏「维护的项目」：沿用文章里的 ghcard，收窄间距适配 280px 栏宽 */
+.about-projects .ghcard {
+	margin: 0 0 10px;
+	padding: 12px;
+}
+
+.about-projects .ghcard:last-child { margin-bottom: 0; }
+
+.about-projects .ghcard-head { font-size: 13px; }
+.about-projects .ghcard-desc { margin-top: 6px; font-size: 12px; }
+.about-projects .ghcard-meta { gap: 10px; margin-top: 8px; font-size: 11px; }
+
 .about-profile .about-stats {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -96,6 +96,28 @@
 					</ul>
 				</section>
 
+				<% var proj = about.projects || {};
+					var projTitle = proj.title || '维护的项目';
+					var projRepos = (proj.repos || []).filter(function (r) {
+						return /^[\w.-]+\/[\w.-]+$/.test(String(r || '').trim());
+					});
+					if (projRepos.length) { %>
+					<section class="about-side-block">
+						<h2 class="about-section-title"><%= projTitle %></h2>
+						<div class="about-projects">
+							<% projRepos.forEach(function (r) {
+								var repo = String(r).trim(); %>
+								<a class="ghcard reveal" href="https://github.com/<%= repo %>"
+									target="_blank" rel="noopener noreferrer" data-repo="<%= repo %>">
+									<span class="ghcard-head"><i class="fa fa-github" aria-hidden="true"></i><span class="ghcard-name"><%= repo %></span></span>
+									<span class="ghcard-desc"></span>
+									<span class="ghcard-meta"></span>
+								</a>
+							<% }) %>
+						</div>
+					</section>
+				<% } %>
+
 				<% if (hasContact) { %>
 					<section class="about-side-block">
 						<h2 class="about-section-title">联系</h2>
